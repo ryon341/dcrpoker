@@ -1,0 +1,241 @@
+Taskcard 002 — Backend MySQL Connection + Environment Config
+Goal
+
+Set up the backend in C:\Users\ryon3\dcrpoker\server to connect cleanly to MySQL and verify the connection with a test endpoint.
+
+This task is only for:
+
+environment configuration
+
+MySQL connection wiring
+
+connection test route
+
+basic backend structure for future DB work
+
+Do not create application tables yet.
+
+Requirements
+1. Install database packages
+
+In server, install:
+
+mysql2
+
+Do not add an ORM yet.
+Use direct MySQL connection/pool first so the backend foundation is simple and verifiable.
+
+2. Environment variables
+
+Create or update .env in server with these variables:
+
+PORT=4000
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=dcrpoker
+DB_USER=root
+DB_PASSWORD=your_password_here
+DB_CONNECTION_LIMIT=10
+
+Also create a .env.example file with the same keys but placeholder values.
+
+Do not hardcode DB credentials anywhere in source files.
+
+3. Folder structure updates
+
+Inside server, create this structure if it does not already exist:
+
+server/
+  src/
+    config/
+    db/
+    routes/
+  server.js
+  .env
+  .env.example
+4. Database connection module
+
+Create a reusable MySQL pool connection module.
+
+File:
+
+src/config/db.js
+or
+src/db/pool.js
+
+Use mysql2/promise.
+
+Requirements:
+
+read all DB config from environment variables
+
+create a connection pool
+
+export the pool
+
+fail clearly if required env vars are missing
+
+5. Startup connection check
+
+When the server starts, it should test the database connection once.
+
+Expected behavior:
+
+if DB connection succeeds, log a success message
+
+if DB connection fails, log the error clearly and exit the process
+
+This is important so startup failures are obvious.
+
+6. Add database health route
+
+Create a new route:
+
+GET /api/db-health
+
+This route should:
+
+run a simple query such as SELECT 1 AS ok
+
+return JSON showing DB connectivity
+
+Expected success response format:
+
+{
+  "ok": true,
+  "database": "connected"
+}
+
+If the query fails, return an error response like:
+
+{
+  "ok": false,
+  "database": "disconnected"
+}
+
+Use proper status codes.
+
+7. Keep existing health route
+
+Preserve the existing route:
+
+GET /api/health
+
+Expected response:
+
+{ "ok": true, "app": "dcrpoker-api" }
+8. Route organization
+
+Move route logic into src/routes so the project starts becoming organized.
+
+Suggested files:
+
+src/routes/health.js
+
+src/routes/dbHealth.js
+
+Mount them cleanly from server.js.
+
+9. Basic server cleanup
+
+Update server.js so it:
+
+loads dotenv
+
+sets up express
+
+sets up cors
+
+sets up morgan
+
+mounts routes
+
+starts server
+
+verifies DB connection at startup
+
+Keep the file clean and small.
+
+Validation Criteria
+
+Task is complete only if all of the following are true:
+
+Environment
+
+.env exists
+
+.env.example exists
+
+DB credentials are read from env vars only
+
+Database connection
+
+backend starts successfully when MySQL is available
+
+backend exits clearly if MySQL connection fails
+
+Endpoints
+
+GET /api/health works
+
+GET /api/db-health works and confirms DB connectivity
+
+Code quality
+
+connection pool is reusable
+
+route files are separated from server.js
+
+no application tables created yet
+
+Constraints
+
+Do not add Prisma
+
+Do not add Sequelize
+
+Do not create schema tables yet
+
+Do not add auth
+
+Do not add business models
+
+Keep this task strictly limited to DB connection foundation
+
+Deliverable
+
+Return:
+
+updated folder tree
+
+installed packages
+
+contents of:
+
+server.js
+
+DB connection module
+
+health route files
+
+.env.example
+
+exact commands used to run the server
+
+example responses from:
+
+/api/health
+
+/api/db-health
+
+Notes
+
+Assume the database name will be:
+
+dcrpoker
+
+If it does not exist yet, create it manually in MySQL before testing the route. Do not create tables in this task.
+
+After this, Taskcard 003 should be:
+Create initial MySQL schema for users, roles, hosts, players, games, host player lists, and game invites.

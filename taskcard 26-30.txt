@@ -1,0 +1,487 @@
+Taskcard 026 — Notification Center + Host Action Alerts
+Objective
+
+Add an in-app notification system so hosts and players can see important activity without relying only on SMS.
+
+Why now
+
+After TC025, hosts can manage RSVPs, seats, and waitlists. The next missing layer is awareness:
+
+player moved from waitlist to confirmed
+
+game updated
+
+invite received
+
+seat opened
+
+Core features
+
+add notification bell / nav item
+
+create Notifications page
+
+unread count badge
+
+mark as read
+
+basic notification types:
+
+game invite received
+
+RSVP status changed
+
+promoted from waitlist
+
+removed from game
+
+game updated by host
+
+Backend
+
+Add notifications table with fields like:
+
+id
+
+user_id
+
+type
+
+title
+
+body
+
+related_entity_type
+
+related_entity_id
+
+is_read
+
+created_at
+
+Endpoints:
+
+GET /api/notifications
+
+PATCH /api/notifications/:id/read
+
+PATCH /api/notifications/read-all
+
+Trigger notifications when:
+
+host updates invite status
+
+player is promoted from waitlist
+
+host edits game details
+
+Frontend
+
+Suggested files:
+
+client/src/pages/notifications/NotificationsPage.jsx
+
+client/src/components/notifications/NotificationItem.jsx
+
+Acceptance criteria
+
+unread badge visible
+
+notifications list loads
+
+mark read works
+
+key host/player events create notifications
+
+Taskcard 027 — Admin Public Games Directory (Casinos / Card Rooms / Tournaments)
+Objective
+
+Build the admin-managed public games directory so users can search legal public poker options even before the private host network is large.
+
+Why now
+
+Your biggest supply-side risk is low private-game inventory early on. This card solves that by making the app useful before host adoption is mature.
+
+Core features
+
+admin can create public poker venues/games
+
+users can browse/search public listings
+
+list stakes / formats / schedule / tournament info
+
+Data model
+
+Add entities like:
+
+public_venues
+
+public_games
+
+Venue fields:
+
+id
+
+name
+
+city
+
+state
+
+address
+
+website
+
+notes
+
+Game fields:
+
+id
+
+venue_id
+
+title
+
+game_type
+
+stake
+
+schedule_text
+
+buy_in
+
+is_tournament
+
+notes
+
+is_active
+
+Routes
+
+User:
+
+/public-games
+
+/public-games/:id
+
+Admin:
+
+/admin/public-games
+
+/admin/public-games/new
+
+/admin/public-games/:id/edit
+
+Search/filter
+
+city/state
+
+cash vs tournament
+
+stakes
+
+venue name
+
+Acceptance criteria
+
+admin can create/edit listings
+
+users can search/browse listings
+
+public game data is clearly separate from private host games
+
+Taskcard 028 — Host Prospect Import + QR Invite Flow Polish
+Objective
+
+Upgrade the host player-acquisition flow so hosts can easily bring people into the system.
+
+Why now
+
+You already established:
+
+private host player lists
+
+prospect import / external invites
+
+QR-based invite concept
+
+Now this needs to become polished enough for real adoption.
+
+Core features
+
+clean Prospect Import page
+
+CSV upload review step
+
+duplicate detection
+
+per-contact status:
+
+existing user
+
+invited prospect
+
+already on host list
+
+QR invite screen for manual recruitment
+
+formatted invite message templates for text/email copy
+
+Key UX
+
+For contacts not found in system:
+
+generate app invite with QR code
+
+provide copyable text and email wording
+
+let host mark as “invited externally”
+
+For contacts already in system:
+
+add directly to host contacts / eligible invite list
+
+Suggested routes
+
+/host/contacts/import
+
+/host/contacts/prospects
+
+/host/invite-tools
+
+Acceptance criteria
+
+host can upload CSV
+
+app identifies existing vs new prospects
+
+QR invite flow works
+
+host can copy/send formatted invite text manually
+
+Taskcard 029 — Referral + Invite Attribution System
+Objective
+
+Create a simple referral system so host growth and player acquisition can be tracked and rewarded.
+
+Why now
+
+Once import + QR invites are polished, you need attribution:
+
+who invited whom
+
+which hosts drive growth
+
+which links/QRs convert
+
+This sets up future incentives, credits, and marketing ROI.
+
+Core features
+
+unique referral code per user/host
+
+referral links and QR codes
+
+registration attribution
+
+referral dashboard basics
+
+Data model
+
+Add:
+
+referral_codes
+
+referral_events
+
+Track:
+
+inviter_user_id
+
+referred_user_id
+
+source_type (qr, link, csv-invite, manual)
+
+status (clicked, registered, accepted)
+
+Frontend
+
+user referral page
+
+host referral stats card
+
+reusable QR/referral modal
+
+Acceptance criteria
+
+each user has a referral code
+
+signups can be attributed
+
+host can view basic referral performance
+
+groundwork is in place for future credits/rewards
+
+Taskcard 030 — Launch Readiness Pass (QA, Navigation, Empty States, Feature Flags)
+Objective
+
+Run a structured launch-readiness pass so the app feels coherent and usable instead of “feature-complete but rough.”
+
+Why now
+
+By TC030, you’ll have enough core surface area that polish matters as much as new features.
+
+Core goals
+
+remove dead ends
+
+improve empty states
+
+make nav coherent
+
+ensure feature gating behaves correctly
+
+verify mobile usability
+
+add feature flags where needed
+
+Checklist scope
+Navigation audit
+
+all major pages reachable
+
+no broken links
+
+nav labels consistent
+
+Empty states
+
+no games yet
+
+no notifications yet
+
+no bankroll sessions yet
+
+no gear data yet
+
+no public games in area yet
+
+Permissions audit
+
+host-only routes protected
+
+admin-only pages protected
+
+non-host users get helpful redirects
+
+Mobile QA
+
+buttons tappable
+
+tables scroll correctly
+
+cards stack correctly
+
+tools pages readable
+
+Feature flags
+
+Add config flags for unfinished modules so partial launch is safe.
+
+Example:
+
+ENABLE_GEAR
+
+ENABLE_PUBLIC_GAMES
+
+ENABLE_TRAINING
+
+ENABLE_REFERRALS
+
+Error handling
+
+toast or inline errors
+
+better loading states
+
+basic not-found page
+
+Acceptance criteria
+
+app has no major dead-end screens
+
+mobile pass completed
+
+route protection works
+
+feature flags prevent unfinished modules from breaking UX
+
+launch checklist documented
+
+Recommended execution order
+
+Run them exactly like this:
+
+TC026 — Notification Center + Host Action Alerts
+
+TC027 — Admin Public Games Directory
+
+TC028 — Host Prospect Import + QR Invite Flow Polish
+
+TC029 — Referral + Invite Attribution System
+
+TC030 — Launch Readiness Pass
+
+That order gives you:
+
+better operations
+
+more inventory
+
+better growth mechanics
+
+a safer launch surface
+
+What this gets you by TC030
+
+By the end of this run, DCR Poker should have:
+
+Core user value
+
+private game invites
+
+RSVP flow
+
+bankroll tracking
+
+tools
+
+training
+
+Host value
+
+manage game attendance
+
+import players
+
+recruit prospects
+
+track invite growth
+
+Growth value
+
+public listings
+
+referral attribution
+
+in-app notifications
+
+Launch value
+
+usable navigation
+
+empty states
+
+feature flags
+
+QA pass

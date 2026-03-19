@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.log
+
+# Expo build output
+app/dist/
+app/.expo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.code-workspace

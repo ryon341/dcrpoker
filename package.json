@@ -1,0 +1,23 @@
+{
+    "name":  "dcrpoker",
+    "version":  "1.0.0",
+    "description":  "",
+    "main":  "index.js",
+    "directories":  {
+                        "doc":  "docs"
+                    },
+    "scripts":  {
+                    "dev:app":  "npm run web --prefix app",
+                    "dev:server":  "npm run dev --prefix server",
+                    "dev:all":  "concurrently --names APP,SERVER --prefix-colors cyan,yellow \"npm run dev:app\" \"npm run dev:server\""
+                },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "commonjs",
+    "devDependencies":  {
+                            "concurrently":  "^9.2.1"
+                        }
+}
