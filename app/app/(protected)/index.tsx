@@ -50,7 +50,7 @@ export default function HomeScreen() {
 
       {/* ── Top bar ── */}
       <View style={d.topBar}>
-        <Text style={d.brand}>DCR <Text style={{ color: T.red }}>Poker</Text></Text>
+        <Text style={d.brand}>DCR <Text style={d.brandAccent}>Poker</Text></Text>
         {FEATURES.ENABLE_NOTIFICATIONS && (
           <TouchableOpacity
             style={d.bellBtn}
@@ -151,38 +151,39 @@ export default function HomeScreen() {
 
 const d = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
-  content:   { padding: 20, paddingBottom: 48 },
+  content:   { padding: 20, paddingBottom: 56 },
 
   // Top bar
-  topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 8 },
+  topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, marginTop: 8 },
   brand:     { fontSize: 24, fontWeight: 'bold', color: T.white },
+  brandAccent: { color: T.gold },
   bellBtn:   { padding: 6, position: 'relative' },
   bellIcon:  { fontSize: 22 },
   bellBadge: { position: 'absolute', top: 2, right: 2, backgroundColor: T.red, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
   bellBadgeText: { color: T.white, fontSize: 10, fontWeight: 'bold' },
 
   // Welcome card
-  welcomeCard:  { backgroundColor: T.card, borderRadius: 14, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: T.border },
-  welcomeLabel: { color: T.muted, fontSize: 13, marginBottom: 4 },
+  welcomeCard:  { borderRadius: 24, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardGlass, padding: 22, marginBottom: 24 },
+  welcomeLabel: { color: 'rgba(251,191,36,0.7)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 },
   welcomeName:  { color: T.white, fontSize: 22, fontWeight: 'bold', marginBottom: 2 },
-  welcomePhone: { color: T.faint, fontSize: 13 },
+  welcomePhone: { color: T.muted, fontSize: 13 },
 
   // Primary CTAs
-  primaryBtn:     { backgroundColor: T.red, borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginBottom: 10 },
-  primaryBtnText: { color: T.white, fontWeight: 'bold', fontSize: 16 },
-  secondaryBtn:     { backgroundColor: T.card, borderRadius: 10, paddingVertical: 15, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: T.border },
+  primaryBtn:     { backgroundColor: T.gold, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 10 },
+  primaryBtnText: { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },
+  secondaryBtn:     { borderRadius: 16, paddingVertical: 15, alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardGlass },
   secondaryBtnText: { color: T.silver, fontWeight: 'bold', fontSize: 15 },
 
   // Section
-  sectionHead: { color: T.faint, fontSize: 11, fontWeight: 'bold', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 },
+  sectionHead: { color: T.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1.8, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 },
 
   // Tile grid
-  tileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-  tile:      { backgroundColor: T.card, borderRadius: 10, borderWidth: 1, borderColor: T.border, paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', minWidth: '22%', flex: 1 },
-  tileIcon:  { fontSize: 22, marginBottom: 5 },
+  tileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  tile:      { borderRadius: 16, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardGlass, paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', minWidth: '22%', flex: 1 },
+  tileIcon:  { fontSize: 22, marginBottom: 6 },
   tileLabel: { color: T.silver, fontSize: 12, fontWeight: '600', textAlign: 'center' },
 
   // Sign out
-  signOutBtn:  { paddingVertical: 18, marginTop: 8, alignItems: 'center' },
+  signOutBtn:  { paddingVertical: 20, marginTop: 8, alignItems: 'center' },
   signOutText: { color: T.faint, fontSize: 14 },
 });

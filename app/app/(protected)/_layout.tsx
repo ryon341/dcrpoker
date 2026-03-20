@@ -1,13 +1,15 @@
 import { Stack } from 'expo-router';
+import { T } from '../../src/components/ui/Theme';
 
 export default function ProtectedLayout() {
   return (
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#ffffff',
-        headerTitleStyle: { fontWeight: 'bold' },
+        headerStyle: { backgroundColor: T.bg },
+        headerTintColor: T.gold,
+        headerTitleStyle: { color: T.white, fontWeight: 'bold' },
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen name="index"                          options={{ title: 'DCR Poker' }} />

@@ -41,7 +41,7 @@ export function Button({
       activeOpacity={0.75}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#fff" />
+        <ActivityIndicator size="small" color={variant === 'primary' ? '#0c0a09' : '#fff'} />
       ) : (
         <Text style={[btn.text, small ? btn.textSmall : null, btn[`text_${variant}` as keyof typeof btn] as any]}>
           {label}
@@ -52,21 +52,27 @@ export function Button({
 }
 
 const btn = StyleSheet.create({
-  base:      { borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  normal:    { paddingHorizontal: 20, paddingVertical: 14 },
-  small:     { paddingHorizontal: 12, paddingVertical: 7 },
+  base:      { borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  normal:    { paddingHorizontal: 20, paddingVertical: 15 },
+  small:     { paddingHorizontal: 12, paddingVertical: 8 },
   fullWidth: { width: '100%' },
   disabled:  { opacity: 0.45 },
 
-  primary:   { backgroundColor: T.red },
-  secondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: T.border },
+  // Primary — amber/gold with dark text
+  primary:   { backgroundColor: T.gold },
+  // Secondary — subtle glass with border
+  secondary: { backgroundColor: T.cardGlass, borderWidth: 1, borderColor: T.cardBorder },
   ghost:     { backgroundColor: 'transparent' },
-  danger:    { backgroundColor: T.statusDeclined },
+  danger:    { backgroundColor: T.red },
   success:   { backgroundColor: T.statusConfirmed },
   warning:   { backgroundColor: T.statusWaitlisted },
 
-  text:           { color: T.white, fontWeight: 'bold', fontSize: 15 },
+  text:           { color: '#0c0a09', fontWeight: 'bold', fontSize: 15 },
   textSmall:      { fontSize: 13 },
+  text_primary:   { color: '#0c0a09' } as any,
   text_ghost:     { color: T.silver } as any,
   text_secondary: { color: T.silver } as any,
+  text_danger:    { color: T.white } as any,
+  text_success:   { color: T.white } as any,
+  text_warning:   { color: T.white } as any,
 });

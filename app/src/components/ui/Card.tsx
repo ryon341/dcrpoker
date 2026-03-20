@@ -28,10 +28,10 @@ export function Card({ children, style, padded = true, bg }: CardProps) {
 
 const card = StyleSheet.create({
   base:   {
-    backgroundColor: T.card,
-    borderRadius: 12,
+    backgroundColor: T.cardGlass,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: T.border,
+    borderColor: T.cardBorder,
   },
-  padded: { padding: 16 },
+  padded: { padding: 18 },
 });

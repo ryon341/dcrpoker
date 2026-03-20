@@ -1,34 +1,44 @@
-// ─── DCR Poker — Design Tokens ────────────────────────────────────────────────
+// ─── DCR Poker — Design Tokens (DeerCreekRoad Theme) ─────────────────────────
 
 export const T = {
-  // Background
-  bg:      '#0a0a0a',
-  bgAlt:   '#111111',
-  bgDeep:  '#060606',
+  // Background — near-black with warm undertone
+  bg:      '#0b0b0c',
+  bgAlt:   '#111113',
+  bgDeep:  '#060607',
 
   // Surface
-  card:    '#161616',
-  cardAlt: '#1c1c1c',
+  card:    '#18181b',
+  cardAlt: '#1e1e22',
 
-  // Borders
-  border:     '#222222',
-  borderAlt:  '#2a2a2a',
+  // Borders — warm dark
+  border:     'rgba(255,255,255,0.09)',
+  borderAlt:  'rgba(255,255,255,0.14)',
 
-  // Brand
+  // Primary accent — amber/gold (replaces red as main brand color)
+  gold:      '#FBBF24',   // amber-400
+  goldLight: '#FCD34D',   // amber-300
+  goldFaint: 'rgba(251,191,36,0.15)',
+  goldGlow:  'rgba(251,191,36,0.07)',
+
+  // Legacy red — retained for danger/error states only
   red:     '#e94560',
   redDark: '#c23050',
 
   // Accents
-  gold:    '#f5a623',
   blue:    '#4a9eff',
   green:   '#4caf50',
   purple:  '#9b59b6',
 
-  // Text
-  white:   '#ffffff',
-  silver:  '#cccccc',
-  muted:   '#888888',
-  faint:   '#444444',
+  // Text — stone scale
+  white:   '#FAFAF9',   // stone-50
+  silver:  '#D6D3D1',   // stone-300
+  muted:   '#78716C',   // stone-500
+  faint:   '#57534E',   // stone-600
+
+  // Input / overlay
+  inputBg:  'rgba(0,0,0,0.28)',
+  cardGlass: 'rgba(255,255,255,0.04)',
+  cardBorder: 'rgba(255,255,255,0.09)',
 
   // Status surfaces
   statusConfirmed:  '#1a5a2a',
