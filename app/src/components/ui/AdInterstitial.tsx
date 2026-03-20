@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from './Theme';
 
 const AD_URL = 'https://www.deercreekroad.com/poker-tables';
-const COUNTDOWN = 15;
+const COUNTDOWN = 7;
 
 interface AdInterstitialProps {
   visible: boolean;
