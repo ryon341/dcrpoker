@@ -6,6 +6,7 @@ import { useArcadeStats } from '../../../src/features/arcade/hooks/useArcadeStat
 import { useAuth } from '../../../src/context/AuthContext';
 import { LoginPromptSheet } from '../../../src/components/ui/LoginPromptSheet';
 import { T } from '../../../src/components/ui/Theme';
+import { AdInterstitial, useAdGate } from '../../../src/components/ui/AdInterstitial';
 
 const GAMES = [
   { id: 'outs',      icon: '🃏', title: 'Outs Calculator',       route: '/(protected)/arcade/outs',       desc: 'Count your draws fast. 10-question quiz sessions.' },
@@ -22,38 +23,46 @@ export default function ArcadeHubScreen() {
   const { user } = useAuth();
   const { statsMap } = useArcadeStats();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const { showAd, markAdShown } = useAdGate('arcade');
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content}>
-      <View style={s.header}>
-        <Text style={s.eyebrow}>Poker Arcade</Text>
-        <Text style={s.subtitle}>Quick games for waiting time, warmups, and poker instincts.</Text>
-      </View>
-
-      {!user && (
-        <TouchableOpacity style={s.guestBanner} onPress={() => setShowLoginPrompt(true)} activeOpacity={0.8}>
-          <Text style={s.guestBannerText}>📊  Scores saved locally — <Text style={s.guestBannerLink}>Log in to sync across devices</Text></Text>
-        </TouchableOpacity>
-      )}
-
-      {GAMES.map(g => (
-        <ArcadeGameCard
-          key={g.id}
-          icon={g.icon}
-          title={g.title}
-          description={g.desc}
-          stat={statsMap[g.id]}
-          onPress={() => router.push(g.route as any)}
-        />
-      ))}
-
-      <LoginPromptSheet
-        visible={showLoginPrompt}
-        featureName="score sync"
-        onDismiss={() => setShowLoginPrompt(false)}
-        returnTo="/(protected)/arcade"
+    <>
+      <AdInterstitial
+        visible={showAd}
+        onDismiss={markAdShown}
+        storageKey="arcade"
       />
-    </ScrollView>
+      <ScrollView style={s.container} contentContainerStyle={s.content}>
+        <View style={s.header}>
+          <Text style={s.eyebrow}>Poker Arcade</Text>
+          <Text style={s.subtitle}>Quick games for waiting time, warmups, and poker instincts.</Text>
+        </View>
+
+        {!user && (
+          <TouchableOpacity style={s.guestBanner} onPress={() => setShowLoginPrompt(true)} activeOpacity={0.8}>
+            <Text style={s.guestBannerText}>📊  Scores saved locally — <Text style={s.guestBannerLink}>Log in to sync across devices</Text></Text>
+          </TouchableOpacity>
+        )}
+
+        {GAMES.map(g => (
+          <ArcadeGameCard
+            key={g.id}
+            icon={g.icon}
+            title={g.title}
+            description={g.desc}
+            stat={statsMap[g.id] as any}
+            onPress={() => router.push(g.route as any)}
+          />
+        ))}
+
+        <LoginPromptSheet
+          visible={showLoginPrompt}
+          featureName="score sync"
+          onDismiss={() => setShowLoginPrompt(false)}
+          returnTo="/(protected)/arcade"
+        />
+      </ScrollView>
+    </>
   );
 }
 

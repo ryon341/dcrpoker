@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AdInterstitial, useAdGate } from '../../../src/components/ui/AdInterstitial';
 import {
   AccessoryProduct,
   ACCESSORY_PRODUCTS,
@@ -105,6 +106,7 @@ const TIER_FILTERS: { label: string; value: TierFilter }[] = [
 
 export default function GearPage() {
   const [tierFilter, setTierFilter] = useState<TierFilter>('all');
+  const { showAd, markAdShown } = useAdGate('gear');
 
   const filteredChips =
     tierFilter === 'all'
@@ -112,7 +114,9 @@ export default function GearPage() {
       : CHIP_PRODUCTS.filter(p => p.tier === tierFilter);
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content}>
+    <>
+      <AdInterstitial visible={showAd} onDismiss={markAdShown} storageKey="gear" />
+      <ScrollView style={s.container} contentContainerStyle={s.content}>
       <Text style={s.heading}>Gear</Text>
       <Text style={s.sub}>
         Curated recommendations for every type of home game. Every link supports DCR Poker.
@@ -160,6 +164,7 @@ export default function GearPage() {
         Links above are Amazon affiliate links. DCR Poker may earn a small commission at no extra cost to you. We only recommend products we'd use ourselves.
       </Text>
     </ScrollView>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { AdInterstitial, useAdGate } from '../../../src/components/ui/AdInterstitial';
 
 interface ToolCardProps {
   title: string;
@@ -35,8 +36,11 @@ function ToolCard({ title, description, available, onPress }: ToolCardProps) {
 
 export default function ToolsPage() {
   const router = useRouter();
+  const { showAd, markAdShown } = useAdGate('tools');
 
   return (
+    <>
+      <AdInterstitial visible={showAd} onDismiss={markAdShown} storageKey="tools" />
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>Poker Tools</Text>
       <Text style={styles.subheading}>Practical utilities for running better home games.</Text>
@@ -95,6 +99,7 @@ export default function ToolsPage() {
         available={false}
       />
     </ScrollView>
+    </>
   );
 }
 
