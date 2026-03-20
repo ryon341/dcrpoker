@@ -4,8 +4,14 @@ import { Platform } from 'react-native';
 
 // On mobile (Expo Go), localhost refers to the device itself — use the Metro
 // server's LAN IP so the phone can reach the API on the same machine.
+// On web in production, use empty string (relative URL) so nginx proxies /api/.
 function resolveApiBase(): string {
-  if (Platform.OS === 'web') return 'http://localhost:4000';
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return ''; // production: relative URLs, nginx proxies /api/ → localhost:4000
+    }
+    return 'http://localhost:4000';
+  }
   const metroHost = (Constants.expoConfig as any)?.hostUri?.split(':')[0];
   if (metroHost) return `http://${metroHost}:4000`;
   return 'http://localhost:4000';
