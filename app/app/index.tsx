@@ -4,23 +4,26 @@ import { useAuth } from '../src/context/AuthContext';
 import { T } from '../src/components/ui/Theme';
 
 // ─── NavBar ───────────────────────────────────────────────────────────────────
+const NAV_LINKS: [string, string, string][] = [
+  ['🎮', 'Arcade',   '/(protected)/arcade'],
+  ['🔧', 'Tools',    '/(protected)/tools'],
+  ['📊', 'Training', '/(protected)/tools/training'],
+  ['🛒', 'Gear',     '/(protected)/gear'],
+];
+
 function NavBar({ wide }: { wide: boolean }) {
   const router = useRouter();
   const { user } = useAuth();
   return (
     <View style={[nav.outer, wide && nav.outerWide]}>
+      {/* ── main row: logo + links (wide) + CTA ── */}
       <View style={nav.inner}>
         <TouchableOpacity onPress={() => router.push('/')}>
           <Image source={require('../assets/logo.png')} style={nav.logo} resizeMode="contain" />
         </TouchableOpacity>
         {wide && (
           <View style={nav.links}>
-            {[
-              ['Arcade', '/(protected)/arcade'],
-              ['Tools', '/(protected)/tools'],
-              ['Training', '/(protected)/tools/training'],
-              ['Gear', '/(protected)/gear'],
-            ].map(([label, href]) => (
+            {NAV_LINKS.map(([, label, href]) => (
               <TouchableOpacity key={label} onPress={() => router.push(href as any)} style={nav.link}>
                 <Text style={nav.linkText}>{label}</Text>
               </TouchableOpacity>
@@ -37,6 +40,23 @@ function NavBar({ wide }: { wide: boolean }) {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* ── mobile guest quicklinks row ── */}
+      {!wide && (
+        <View style={nav.mobileRow}>
+          {NAV_LINKS.map(([icon, label, href]) => (
+            <TouchableOpacity
+              key={label}
+              style={nav.mobilePill}
+              onPress={() => router.push(href as any)}
+              activeOpacity={0.75}
+            >
+              <Text style={nav.mobilePillIcon}>{icon}</Text>
+              <Text style={nav.mobilePillText}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -391,7 +411,7 @@ export default function LandingPage() {
 // ─── StyleSheets ──────────────────────────────────────────────────────────────
 
 const nav = StyleSheet.create({
-  outer:      { backgroundColor: 'rgba(11,11,12,0.94)', borderBottomWidth: 1, borderBottomColor: T.border, paddingVertical: 12, paddingHorizontal: 20 },
+  outer:      { backgroundColor: 'rgba(11,11,12,0.94)', borderBottomWidth: 1, borderBottomColor: T.border, paddingTop: 12, paddingBottom: 8, paddingHorizontal: 20 },
   outerWide:  { paddingHorizontal: 40 },
   inner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', maxWidth: T.MAX, alignSelf: 'center', width: '100%' },
   logo:       { height: 36, width: 110 },
@@ -400,6 +420,11 @@ const nav = StyleSheet.create({
   linkText:   { color: T.silver, fontSize: 14, fontWeight: '500' },
   signIn:     { backgroundColor: T.gold, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20 },
   signInText: { color: '#0c0a09', fontWeight: '700', fontSize: 14 },
+  // mobile guest quicklinks
+  mobileRow:     { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10, paddingBottom: 4 },
+  mobilePill:    { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: T.border },
+  mobilePillIcon:{ fontSize: 13 },
+  mobilePillText:{ color: T.silver, fontSize: 13, fontWeight: '600' },
 });
 
 const hero = StyleSheet.create({
