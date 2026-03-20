@@ -114,7 +114,7 @@ export default function HomeScreen() {
       </View>
 
       {/* ── Tools & Resources ── */}
-      {(FEATURES.ENABLE_TOOLS || FEATURES.ENABLE_GEAR || FEATURES.ENABLE_PUBLIC_GAMES) ? (
+      {(FEATURES.ENABLE_TOOLS || FEATURES.ENABLE_GEAR || FEATURES.ENABLE_PUBLIC_GAMES || FEATURES.ENABLE_ARCADE) ? (
         <>
           <SectionHead label="Tools & Resources" />
           <View style={d.tileGrid}>
@@ -126,8 +126,9 @@ export default function HomeScreen() {
             ) : null}
             {FEATURES.ENABLE_PUBLIC_GAMES ? (
               <NavTile icon="📍" label="Public Games" onPress={() => router.push('/(protected)/public-games')} />
-            ) : null}
-          </View>
+            ) : null}            {FEATURES.ENABLE_ARCADE ? (
+              <NavTile icon="🎮" label="Arcade" onPress={() => router.push('/(protected)/arcade')} />
+            ) : null}          </View>
         </>
       ) : null}
 

@@ -34,6 +34,14 @@ export default function ProtectedLayout() {
       <Stack.Screen name="account/billing"                options={{ title: 'Billing & Plan' }} />
       <Stack.Screen name="tools/index"                    options={{ title: 'Poker Tools' }} />
       <Stack.Screen name="gear/index"                     options={{ title: 'Gear' }} />
+      <Stack.Screen name="arcade/index"                   options={{ title: 'Poker Arcade' }} />
+      <Stack.Screen name="arcade/outs"                    options={{ title: 'Outs Calculator' }} />
+      <Stack.Screen name="arcade/nuts"                    options={{ title: 'Spot the Nuts' }} />
+      <Stack.Screen name="arcade/chip-stack"              options={{ title: 'Chip Stack Builder' }} />
+      <Stack.Screen name="arcade/memory"                  options={{ title: 'Card Memory' }} />
+      <Stack.Screen name="arcade/solitaire"               options={{ title: 'Poker Solitaire' }} />
+      <Stack.Screen name="arcade/blackjack"               options={{ title: 'Mini Blackjack' }} />
+      <Stack.Screen name="arcade/reaction"                options={{ title: 'Reaction Timer' }} />
     </Stack>
   );
 }

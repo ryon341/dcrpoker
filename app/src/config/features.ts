@@ -11,6 +11,7 @@ export const FEATURES = {
   ENABLE_GEAR:           true,
   ENABLE_TOOLS:          true,
   ENABLE_ADMIN_PANEL:    true,
+  ENABLE_ARCADE:         true,
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;
