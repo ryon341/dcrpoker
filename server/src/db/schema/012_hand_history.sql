@@ -1,8 +1,8 @@
 -- Hand History table for Hand Recorder feature (TC042)
 
 CREATE TABLE IF NOT EXISTS hand_history (
-  id                INT UNSIGNED     AUTO_INCREMENT PRIMARY KEY,
-  user_id           INT UNSIGNED     NOT NULL,
+  id                BIGINT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  user_id           BIGINT UNSIGNED  NOT NULL,
   created_at        DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
