@@ -5,6 +5,8 @@ import { T } from '../../../src/components/ui/Theme';
 import { GameResultModal } from '../../../src/features/arcade/components/GameResultModal';
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
 
 const GAME_W = Dimensions.get('window').width - 80;
 const CHIP_SIZE = 54;
@@ -15,6 +17,7 @@ type GamePhase = 'idle' | 'playing' | 'ended';
 
 export default function ChipStackBuilderScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [phase, setPhase] = useState<GamePhase>('idle');
   const [score, setScore] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
@@ -48,7 +51,11 @@ export default function ChipStackBuilderScreen() {
     scoreRef.current = 0;
     streakRef.current = 0;
     setFeedback('');
-    arcadeApi.getGameStats('chip_stack').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('chip_stack').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('chip_stack').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
     setPhase('playing');
     startMotion(0);
   }
@@ -73,7 +80,11 @@ export default function ChipStackBuilderScreen() {
       // Game over
       if (currentAnim.current) currentAnim.current.stop();
       setPhase('ended');
-      arcadeApi.submitResult({ gameId: 'chip_stack', score: scoreRef.current, streak: streakRef.current }).catch(() => {});
+      if (user) {
+        arcadeApi.submitResult({ gameId: 'chip_stack', score: scoreRef.current, streak: streakRef.current }).catch(() => {});
+      } else {
+        submitGuestResult('chip_stack', scoreRef.current, streakRef.current).catch(() => {});
+      }
     }
   }
 

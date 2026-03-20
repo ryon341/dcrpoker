@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { pendingInvite } from '../../src/utils/pendingInvite';
 import { T } from '../../src/components/ui/Theme';
@@ -11,6 +11,7 @@ import { T } from '../../src/components/ui/Theme';
 export default function LoginScreen() {
   const { login } = useAuth();
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +29,10 @@ export default function LoginScreen() {
       if (code) {
         await pendingInvite.clear();
         router.replace(`/invite/${code}`);
+        return;
+      }
+      if (returnTo && !returnTo.startsWith('/(auth)')) {
+        router.replace(returnTo as any);
         return;
       }
     } catch (e: any) {

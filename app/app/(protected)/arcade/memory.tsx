@@ -5,6 +5,8 @@ import { T } from '../../../src/components/ui/Theme';
 import { GameResultModal } from '../../../src/features/arcade/components/GameResultModal';
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
 import { computeMemoryScore } from '../../../src/features/arcade/utils/scoring';
 import { shuffle } from '../../../src/features/arcade/utils/deck';
 
@@ -21,6 +23,7 @@ type GamePhase = 'idle' | 'playing' | 'ended';
 
 export default function CardMemoryScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [phase, setPhase] = useState<GamePhase>('idle');
   const [grid, setGrid] = useState<CardCell[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -43,7 +46,11 @@ export default function CardMemoryScreen() {
     setElapsed(0);
     setScore(0);
     setPhase('playing');
-    arcadeApi.getGameStats('memory').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('memory').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('memory').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
   }
 
   // Start timer on first flip
@@ -89,7 +96,11 @@ export default function CardMemoryScreen() {
             const finalScore = computeMemoryScore(finalElapsed);
             setScore(finalScore);
             setPhase('ended');
-            arcadeApi.submitResult({ gameId: 'memory', score: finalScore, streak: 0 }).catch(() => {});
+            if (user) {
+              arcadeApi.submitResult({ gameId: 'memory', score: finalScore, streak: 0 }).catch(() => {});
+            } else {
+              submitGuestResult('memory', finalScore, 0).catch(() => {});
+            };
           }
         }, 300);
       } else {

@@ -5,6 +5,8 @@ import { T } from '../../../src/components/ui/Theme';
 import { GameResultModal } from '../../../src/features/arcade/components/GameResultModal';
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
+import { useAuth } from '../../../src/context/AuthContext';
 import { computeReactionScore } from '../../../src/features/arcade/utils/scoring';
 
 const TOTAL_ATTEMPTS = 5;
@@ -12,6 +14,7 @@ type Phase = 'idle' | 'waiting' | 'active' | 'early' | 'done';
 
 export default function ReactionTimerScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [gamePhase, setGamePhase] = useState<Phase>('idle');
   const [attempt, setAttempt] = useState(0);
   const [times, setTimes] = useState<number[]>([]);
@@ -29,7 +32,11 @@ export default function ReactionTimerScreen() {
     setAttempt(1);
     setGamePhase('waiting');
     scheduleActive();
-    arcadeApi.getGameStats('reaction').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('reaction').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('reaction').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
   }
 
   function scheduleActive() {
@@ -62,7 +69,11 @@ export default function ReactionTimerScreen() {
         setGamePhase('done');
         const avg = Math.round(newTimes.reduce((a, b) => a + b, 0) / newTimes.length);
         const score = computeReactionScore(avg);
+      if (user) {
         arcadeApi.submitResult({ gameId: 'reaction', score, streak: 0 }).catch(() => {});
+      } else {
+        submitGuestResult('reaction', score, 0).catch(() => {});
+      }
       } else {
         setAttempt(nextAttempt);
         setGamePhase('waiting');

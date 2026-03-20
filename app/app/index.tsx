@@ -20,6 +20,7 @@ const C = {
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 function NavBar({ wide }: { wide: boolean }) {
   const router = useRouter();
+  const { user } = useAuth();
   return (
     <View style={[nav.outer, wide ? nav.outerWide : null]}>
       <View style={nav.inner}>
@@ -28,16 +29,22 @@ function NavBar({ wide }: { wide: boolean }) {
         </TouchableOpacity>
         {wide && (
           <View style={nav.links}>
-            {[['Tools', '/(protected)/tools'], ['Training', '/(protected)/tools/training'], ['Gear', '/(protected)/gear'], ['Pricing', '/(protected)/account/billing']].map(([label, href]) => (
+            {[['Arcade', '/(protected)/arcade'], ['Tools', '/(protected)/tools'], ['Training', '/(protected)/tools/training'], ['Gear', '/(protected)/gear'], ['Pricing', '/(protected)/account/billing']].map(([label, href]) => (
               <TouchableOpacity key={label} onPress={() => router.push(href as any)} style={nav.link}>
                 <Text style={nav.linkText}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
-        <TouchableOpacity style={nav.signIn} onPress={() => router.push('/(auth)/login')}>
-          <Text style={nav.signInText}>Sign In</Text>
-        </TouchableOpacity>
+        {user ? (
+          <TouchableOpacity style={nav.signIn} onPress={() => router.push('/(protected)')}>
+            <Text style={nav.signInText}>My Account</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={nav.signIn} onPress={() => router.push('/(auth)/login')}>
+            <Text style={nav.signInText}>Sign In</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

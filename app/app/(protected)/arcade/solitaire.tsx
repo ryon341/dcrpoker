@@ -5,6 +5,8 @@ import { T } from '../../../src/components/ui/Theme';
 import { GameResultModal } from '../../../src/features/arcade/components/GameResultModal';
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
 import { deal } from '../../../src/features/arcade/utils/deck';
 import { cardDisplay, parseCard } from '../../../src/features/arcade/utils/cards';
 import { evaluateHand } from '../../../src/features/arcade/utils/solitaireUtils';
@@ -16,6 +18,7 @@ type GamePhase = 'idle' | 'playing' | 'result' | 'ended';
 
 export default function SolitaireScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [phase, setPhase] = useState<GamePhase>('idle');
   const [cards, setCards] = useState<string[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -33,7 +36,11 @@ export default function SolitaireScreen() {
     setPhase('playing');
     setCards(deal(7));
     setSelected([]);
-    arcadeApi.getGameStats('solitaire').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('solitaire').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('solitaire').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
   }
 
   function toggleCard(idx: number) {
@@ -60,7 +67,11 @@ export default function SolitaireScreen() {
     const next = round + 1;
     if (next > SESSION_ROUNDS) {
       setPhase('ended');
-      arcadeApi.submitResult({ gameId: 'solitaire', score: score, streak }).catch(() => {});
+      if (user) {
+        arcadeApi.submitResult({ gameId: 'solitaire', score: score, streak: 0 }).catch(() => {});
+      } else {
+        submitGuestResult('solitaire', score, 0).catch(() => {});
+      }
       return;
     }
     setRound(next);

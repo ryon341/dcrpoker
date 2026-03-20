@@ -5,6 +5,8 @@ import { T } from '../../../src/components/ui/Theme';
 import { GameResultModal } from '../../../src/features/arcade/components/GameResultModal';
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
+import { useAuth } from '../../../src/context/AuthContext';
 import { shuffle, fullDeck } from '../../../src/features/arcade/utils/deck';
 import { cardDisplay, parseCard, handValue } from '../../../src/features/arcade/utils/cards';
 
@@ -54,6 +56,7 @@ function dealerPlay(state: RoundState): RoundState {
 
 export default function MiniBlackjackScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
   const [round, setRound] = useState<RoundState | null>(null);
   const [roundNum, setRoundNum] = useState(0);
@@ -68,7 +71,11 @@ export default function MiniBlackjackScreen() {
     setRoundNum(1);
     setRound(dealRound());
     setGamePhase('session');
-    arcadeApi.getGameStats('blackjack').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('blackjack').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('blackjack').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
   }
 
   function handleHit() {
@@ -97,7 +104,11 @@ export default function MiniBlackjackScreen() {
     const next = roundNum + 1;
     if (next > SESSION_ROUNDS) {
       setGamePhase('ended');
-      arcadeApi.submitResult({ gameId: 'blackjack', score: wins, streak }).catch(() => {});
+      if (user) {
+        arcadeApi.submitResult({ gameId: 'blackjack', score: wins, streak }).catch(() => {});
+      } else {
+        submitGuestResult('blackjack', wins, streak).catch(() => {});
+      }
       return;
     }
     setRoundNum(next);

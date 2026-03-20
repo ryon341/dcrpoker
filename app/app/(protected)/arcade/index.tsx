@@ -1,7 +1,10 @@
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArcadeGameCard } from '../../../src/features/arcade/components/ArcadeGameCard';
 import { useArcadeStats } from '../../../src/features/arcade/hooks/useArcadeStats';
+import { useAuth } from '../../../src/context/AuthContext';
+import { LoginPromptSheet } from '../../../src/components/ui/LoginPromptSheet';
 import { T } from '../../../src/components/ui/Theme';
 
 const GAMES = [
@@ -16,7 +19,9 @@ const GAMES = [
 
 export default function ArcadeHubScreen() {
   const router = useRouter();
-  const { statsMap, loading } = useArcadeStats();
+  const { user } = useAuth();
+  const { statsMap } = useArcadeStats();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content}>
@@ -24,6 +29,12 @@ export default function ArcadeHubScreen() {
         <Text style={s.eyebrow}>Poker Arcade</Text>
         <Text style={s.subtitle}>Quick games for waiting time, warmups, and poker instincts.</Text>
       </View>
+
+      {!user && (
+        <TouchableOpacity style={s.guestBanner} onPress={() => setShowLoginPrompt(true)} activeOpacity={0.8}>
+          <Text style={s.guestBannerText}>📊  Scores saved locally — <Text style={s.guestBannerLink}>Log in to sync across devices</Text></Text>
+        </TouchableOpacity>
+      )}
 
       {GAMES.map(g => (
         <ArcadeGameCard
@@ -35,14 +46,24 @@ export default function ArcadeHubScreen() {
           onPress={() => router.push(g.route as any)}
         />
       ))}
+
+      <LoginPromptSheet
+        visible={showLoginPrompt}
+        featureName="score sync"
+        onDismiss={() => setShowLoginPrompt(false)}
+        returnTo="/(protected)/arcade"
+      />
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.bg },
-  content:   { padding: 20, paddingBottom: 48 },
-  header:    { marginBottom: 20 },
-  eyebrow:   { color: T.gold, fontSize: 22, fontWeight: 'bold', marginBottom: 6 },
-  subtitle:  { color: T.muted, fontSize: 14, lineHeight: 20 },
+  container:       { flex: 1, backgroundColor: T.bg },
+  content:         { padding: 20, paddingBottom: 48 },
+  header:          { marginBottom: 20 },
+  eyebrow:         { color: T.gold, fontSize: 22, fontWeight: 'bold', marginBottom: 6 },
+  subtitle:        { color: T.muted, fontSize: 14, lineHeight: 20 },
+  guestBanner:     { backgroundColor: 'rgba(251,191,36,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(251,191,36,0.2)', paddingVertical: 12, paddingHorizontal: 16, marginBottom: 16 },
+  guestBannerText: { color: T.muted, fontSize: 13 },
+  guestBannerLink: { color: T.gold, fontWeight: '600' },
 });

@@ -7,6 +7,8 @@ import { GameResultModal } from '../../../src/features/arcade/components/GameRes
 import { InstructionSheet } from '../../../src/features/arcade/components/InstructionSheet';
 import { useGameSession } from '../../../src/features/arcade/hooks/useGameSession';
 import { arcadeApi } from '../../../src/features/arcade/utils/arcadeApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { getGuestGameStats, submitGuestResult } from '../../../src/utils/guestStorage';
 import outsQuestions, { OutsQuestion } from '../../../src/features/arcade/data/outsQuestions';
 import { shuffle } from '../../../src/features/arcade/utils/deck';
 import { cardDisplay, parseCard } from '../../../src/features/arcade/utils/cards';
@@ -19,6 +21,7 @@ function buildSession() {
 
 export default function OutsCalculatorScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const session = useGameSession(SESSION_SIZE);
   const [questions, setQuestions] = useState<OutsQuestion[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -35,7 +38,11 @@ export default function OutsCalculatorScreen() {
     setQIndex(0);
     setSelected(null);
     session.startGame();
-    arcadeApi.getGameStats('outs').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    if (user) {
+      arcadeApi.getGameStats('outs').then(r => setHighScore(r.data?.high_score ?? 0)).catch(() => {});
+    } else {
+      getGuestGameStats('outs').then(s => setHighScore(s?.high_score ?? 0)).catch(() => {});
+    }
   }
 
   function handleAnswer(opt: number) {
@@ -53,7 +60,12 @@ export default function OutsCalculatorScreen() {
     const nextIndex = qIndex + 1;
     if (nextIndex >= SESSION_SIZE) {
       session.endGame();
-      arcadeApi.submitResult({ gameId: 'outs', score: session.score + (isCorrect ? 1 : 0), streak: session.streak }).catch(() => {});
+      const finalScore = session.score + (isCorrect ? 1 : 0);
+      if (user) {
+        arcadeApi.submitResult({ gameId: 'outs', score: finalScore, streak: session.streak }).catch(() => {});
+      } else {
+        submitGuestResult('outs', finalScore, session.streak).catch(() => {});
+      }
       return;
     }
     setQIndex(nextIndex);
