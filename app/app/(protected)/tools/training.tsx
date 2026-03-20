@@ -41,6 +41,21 @@ export default function TrainingPage() {
         <Text style={s.arrow}>›</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={s.card}
+        onPress={() => router.push('/(protected)/tools/training-spot')}
+        activeOpacity={0.75}
+      >
+        <Text style={s.cardIcon}>🧠</Text>
+        <View style={s.cardBody}>
+          <Text style={s.cardTitle}>Spot Trainer</Text>
+          <Text style={s.cardDesc}>
+            Realistic preflop scenarios with stack depth and prior action. Unopened, vs-open, and short-stack spots.
+          </Text>
+        </View>
+        <Text style={s.arrow}>›</Text>
+      </TouchableOpacity>
+
       <View style={{ marginTop: 40 }}>
         <Text style={s.sectionTitle}>Learn from the Best</Text>
         <AudiobookGrid />

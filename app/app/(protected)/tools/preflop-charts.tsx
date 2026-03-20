@@ -129,7 +129,9 @@ function HandMatrix({
                   ]}
                   onPress={() => onSelect(ri, ci)}
                   activeOpacity={0.7}
-                />
+                >
+                  <Text style={mx.cellText}>{key}</Text>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -143,8 +145,9 @@ const mx = StyleSheet.create({
   row:        { flexDirection: 'row' },
   headerCell: { height: CELL_SIZE, justifyContent: 'center', alignItems: 'center' },
   rankText:   { color: '#888', fontSize: 9, fontWeight: '700' },
-  cell:       { borderWidth: 0.5, borderColor: '#1a1a2e' },
+  cell:       { borderWidth: 0.5, borderColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' },
   cellSelected: { borderWidth: 2, borderColor: '#fff' },
+  cellText:   { color: '#fff', fontSize: CELL_SIZE >= 28 ? 10 : 7, fontWeight: '700', textAlign: 'center' },
 });
 
 // ─── Main page ────────────────────────────────────────────────────────────────

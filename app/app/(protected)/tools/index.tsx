@@ -70,6 +70,20 @@ export default function ToolsPage() {
       />
 
       <ToolCard
+        title="🃏 Hand Recorder"
+        description="Log hands during or after play. Tag, review, and filter your history."
+        available
+        onPress={() => router.push('/(protected)/tools/hand-recorder')}
+      />
+
+      <ToolCard
+        title="📐 EV Analyzer"
+        description="Calculate pot odds, required equity, and expected value. Supports direct equity or outs mode."
+        available
+        onPress={() => router.push('/(protected)/tools/ev-analyzer')}
+      />
+
+      <ToolCard
         title="⏱ Tournament Clock"
         description="Manage blind levels, breaks, and level timers."
         available={false}

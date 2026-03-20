@@ -53,6 +53,12 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
   }
   clearTimeout(timer);
 
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    // Server returned HTML (e.g. nginx error page) — not a JSON API response
+    throw new Error(`Server error (${res.status}): Could not reach the API. Please try again.`);
+  }
+
   const json = await res.json();
 
   if (!res.ok) {

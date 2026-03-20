@@ -27,6 +27,7 @@ const referralsRouter           = require('./src/routes/referrals');
 const bankrollRouter            = require('./src/routes/bankroll');
 const notificationsRouter       = require('./src/routes/notifications');
 const publicGamesRouter         = require('./src/routes/publicGames');
+const handsRouter               = require('./src/routes/hands');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -78,6 +79,7 @@ app.use('/api/my/referrals',             referralsRouter);
 app.use('/api/my/bankroll',              bankrollRouter);
 app.use('/api/my/notifications',         notificationsRouter);
 app.use('/api/public-games',             publicGamesRouter);
+app.use('/api/my/hands',                 handsRouter);
 
 // Start server and verify DB connection
 app.listen(PORT, async () => {
