@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -8,7 +9,7 @@ interface StatsCardProps {
   icon?: string;
 }
 
-export function StatsCard({ label, value, subtext, icon }: StatsCardProps) {
+export const StatsCard = memo(function StatsCard({ label, value, subtext, icon }: StatsCardProps) {
   return (
     <View style={s.card}>
       {icon ? (
@@ -19,7 +20,7 @@ export function StatsCard({ label, value, subtext, icon }: StatsCardProps) {
       {subtext ? <Text style={s.subtext}>{subtext}</Text> : null}
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   card:    { flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 14, gap: 4 },

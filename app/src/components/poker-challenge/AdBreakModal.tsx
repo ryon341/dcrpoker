@@ -49,9 +49,11 @@ export function AdBreakModal({
   onSkip,
   variant = 'generic',
 }: AdBreakModalProps) {
-  const [elapsed, setElapsed]   = useState(0);
-  const [phase, setPhase]       = useState<Phase>('loading');
-  const flashOpacity            = useRef(new Animated.Value(0)).current;
+  const [displaySeconds, setDisplaySeconds] = useState(durationSeconds);
+  const [phase, setPhase]                   = useState<Phase>('loading');
+  const [canSkip, setCanSkip]               = useState(false);
+  const progressAnim                        = useRef(new Animated.Value(0)).current;
+  const flashOpacity                        = useRef(new Animated.Value(0)).current;
   const intervalRef             = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCompleteRef           = useRef(onComplete);
   const endingTickRef           = useRef(Math.round(durationSeconds / (TICK_MS / 1000)));
@@ -74,24 +76,39 @@ export function AdBreakModal({
   useEffect(() => {
     if (!visible) {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setElapsed(0);
+      progressAnim.stopAnimation();
+      progressAnim.setValue(0);
+      setDisplaySeconds(durationSeconds);
+      setCanSkip(false);
       setPhase('loading');
       completeFiredRef.current = false;
       return;
     }
 
     // Reset and start
-    setElapsed(0);
+    setDisplaySeconds(durationSeconds);
+    setCanSkip(false);
     setPhase('loading');
     completeFiredRef.current = false;
     endingTickRef.current = Math.round(durationSeconds / (TICK_MS / 1000));
     trackAdEvent({ type: 'impression', mode: trackingMode, timestamp: new Date().toISOString() });
 
+    // Smooth progress bar via Animated.timing — no state updates needed
+    progressAnim.setValue(0);
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: durationSeconds * 1000,
+      useNativeDriver: false,
+    }).start();
+
     let ticks = 0;
     intervalRef.current = setInterval(() => {
       ticks++;
-      const newElapsed = (ticks * TICK_MS) / 1000;
-      setElapsed(newElapsed);
+
+      // Update countdown display once per second (every 10 ticks at 100ms)
+      if (ticks % 10 === 0) {
+        setDisplaySeconds(Math.max(0, durationSeconds - ticks / 10));
+      }
 
       if (ticks === PROMO_TICK) {
         setPhase('promo');
@@ -101,11 +118,18 @@ export function AdBreakModal({
         triggerFlash();
       }
 
+      // Show skip button when time is up
+      if (ticks === endingTickRef.current) {
+        setCanSkip(true);
+      }
+
       // Auto-complete 500ms after duration ends
       const doneTick = endingTickRef.current + 5;
       if (ticks >= doneTick) {
         clearInterval(intervalRef.current!);
         intervalRef.current = null;
+        progressAnim.stopAnimation();
+        progressAnim.setValue(1);
         if (!completeFiredRef.current) {
           completeFiredRef.current = true;
           trackAdEvent({ type: 'complete', mode: trackingMode, timestamp: new Date().toISOString() });
@@ -119,13 +143,10 @@ export function AdBreakModal({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      progressAnim.stopAnimation();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-
-  const progress         = Math.min(elapsed / durationSeconds, 1);
-  const canSkip          = elapsed >= durationSeconds;
-  const remainingSeconds = Math.max(0, Math.ceil(durationSeconds - elapsed));
 
   const bgImage =
     phase === 'loading' ? IMGS.loading :
@@ -166,7 +187,7 @@ export function AdBreakModal({
           <Text style={s.adLabel}>Ad Break</Text>
           <View style={s.countdownWrap}>
             <Image source={IMGS.timerCircle} style={s.timerCircle} />
-            <Text style={s.countdownText}>{remainingSeconds}</Text>
+            <Text style={s.countdownText}>{displaySeconds}</Text>
           </View>
         </View>
 
@@ -231,9 +252,9 @@ export function AdBreakModal({
 
         {/* Progress bar */}
         <View style={s.progressTrack}>
-          <View style={[s.progressFill, { width: `${Math.round(progress * 100)}%` as any }]}>
+          <Animated.View style={[s.progressFill, { width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
             <Image source={IMGS.progressBar} style={s.fill} resizeMode="stretch" />
-          </View>
+          </Animated.View>
         </View>
 
         {/* Skip / Continue — only when timer done */}

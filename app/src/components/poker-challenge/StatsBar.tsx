@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -12,7 +13,7 @@ function barColor(pct: number): string {
   return T.red;
 }
 
-export function StatsBar({ percent, label }: StatsBarProps) {
+export const StatsBar = memo(function StatsBar({ percent, label }: StatsBarProps) {
   const clamped = Math.max(0, Math.min(100, percent));
   return (
     <View style={s.wrap}>
@@ -22,7 +23,7 @@ export function StatsBar({ percent, label }: StatsBarProps) {
       {label ? <Text style={s.label}>{label}</Text> : null}
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   wrap:  { gap: 4 },

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -8,7 +9,7 @@ interface SettingsToggleRowProps {
   description?: string;
 }
 
-export function SettingsToggleRow({ label, value, onValueChange, description }: SettingsToggleRowProps) {
+export const SettingsToggleRow = memo(function SettingsToggleRow({ label, value, onValueChange, description }: SettingsToggleRowProps) {
   return (
     <View style={s.row}>
       <View style={s.textCol}>
@@ -23,7 +24,7 @@ export function SettingsToggleRow({ label, value, onValueChange, description }: 
       />
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   row:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },

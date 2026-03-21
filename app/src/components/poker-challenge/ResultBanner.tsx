@@ -1,11 +1,11 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, memo } from 'react';
 import { Animated, Image, StyleSheet } from 'react-native';
 
 interface Props {
   result: 'correct' | 'incorrect' | null;
 }
 
-export function ResultBanner({ result }: Props) {
+export const ResultBanner = memo(function ResultBanner({ result }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function ResultBanner({ result }: Props) {
       )}
     </Animated.View>
   );
-}
+});
 
 const s = StyleSheet.create({
   outer: { alignItems: 'center', paddingVertical: 8 },

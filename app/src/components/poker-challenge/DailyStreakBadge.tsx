@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -8,7 +9,7 @@ type Props = {
   compact?:  boolean;
 };
 
-export function DailyStreakBadge({ streak, bestStreak, badgeLabel, compact = false }: Props) {
+export const DailyStreakBadge = memo(function DailyStreakBadge({ streak, bestStreak, badgeLabel, compact = false }: Props) {
   if (streak <= 0) return null;
 
   return (
@@ -31,7 +32,7 @@ export function DailyStreakBadge({ streak, bestStreak, badgeLabel, compact = fal
       )}
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   wrap: {

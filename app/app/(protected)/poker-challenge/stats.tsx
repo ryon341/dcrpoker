@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { T } from '../../../src/components/ui/Theme';
@@ -64,13 +65,13 @@ export default function StatsPage() {
   const level = savedProgress?.level ?? 1;
   const hasData = progressLoaded && stats && stats.totalHandsPlayed > 0;
 
-  const accuracy = (stats && stats.totalHandsPlayed > 0)
+  const accuracy = useMemo(() => (stats && stats.totalHandsPlayed > 0)
     ? Math.round((stats.totalCorrect / stats.totalHandsPlayed) * 100)
-    : 0;
-  const winRate = (stats && (stats.totalWins + stats.totalLosses) > 0)
+    : 0, [stats]);
+  const winRate = useMemo(() => (stats && (stats.totalWins + stats.totalLosses) > 0)
     ? Math.round((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100)
-    : 0;
-  const insights = stats ? buildInsights(stats) : [];
+    : 0, [stats]);
+  const insights = useMemo(() => stats ? buildInsights(stats) : [], [stats]);
 
   return (
     <ImageBackground

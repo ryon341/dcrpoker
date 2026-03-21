@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -24,7 +25,7 @@ function Row({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function ScoreRulesPanel({ scoreTable }: Props) {
+export const ScoreRulesPanel = memo(function ScoreRulesPanel({ scoreTable }: Props) {
   return (
     <View style={s.outer}>
       <Text style={s.heading}>SCORING</Text>
@@ -34,7 +35,7 @@ export function ScoreRulesPanel({ scoreTable }: Props) {
       <Row label="Incorrect + Lose" value={scoreTable.incorrectLose} />
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   outer:   { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, borderWidth: 1, borderColor: T.border, padding: 14, gap: 6 },

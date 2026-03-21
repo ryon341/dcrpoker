@@ -23,6 +23,7 @@ export function usePokerProgress() {
   // Load correct progress once auth resolves
   useEffect(() => {
     if (isLoading) return;
+    const t0 = __DEV__ ? Date.now() : 0;
     (async () => {
       let progress: PokerChallengeProgress | null = null;
 
@@ -56,6 +57,7 @@ export function usePokerProgress() {
 
       setSavedProgress(progress);
       setProgressLoaded(true);
+      if (__DEV__) console.log('[PokerChallenge] Progress loaded in', Date.now() - t0, 'ms');
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isGuest, userId]);

@@ -19,7 +19,8 @@ const AD_ANALYTICS_KEY = 'dcr_poker_ad_analytics';
 export async function trackAdEvent(event: AdEvent): Promise<void> {
   try {
     const raw = await AsyncStorage.getItem(AD_ANALYTICS_KEY);
-    const events: AdEvent[] = raw ? (JSON.parse(raw) as AdEvent[]) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    const events: AdEvent[] = Array.isArray(parsed) ? parsed : [];
     events.push(event);
     await AsyncStorage.setItem(AD_ANALYTICS_KEY, JSON.stringify(events));
   } catch {
@@ -30,7 +31,8 @@ export async function trackAdEvent(event: AdEvent): Promise<void> {
 export async function getAdAnalytics(): Promise<AdAnalytics> {
   try {
     const raw = await AsyncStorage.getItem(AD_ANALYTICS_KEY);
-    const events: AdEvent[] = raw ? (JSON.parse(raw) as AdEvent[]) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    const events: AdEvent[] = Array.isArray(parsed) ? parsed : [];
     const impressions = events.filter(e => e.type === 'impression').length;
     const clicks      = events.filter(e => e.type === 'click').length;
     const completions = events.filter(e => e.type === 'complete').length;

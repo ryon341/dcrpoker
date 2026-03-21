@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Animated, Text, StyleSheet } from 'react-native';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onDone?: () => void;
 }
 
-export function ScoreDeltaPop({ delta, visible, onDone }: Props) {
+export const ScoreDeltaPop = memo(function ScoreDeltaPop({ delta, visible, onDone }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
   const [active, setActive] = useState(false);
 
@@ -67,7 +67,7 @@ export function ScoreDeltaPop({ delta, visible, onDone }: Props) {
       </Text>
     </Animated.View>
   );
-}
+});
 
 const s = StyleSheet.create({
   wrap:    { alignItems: 'center', justifyContent: 'center' },

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 interface Props {
@@ -6,7 +7,7 @@ interface Props {
   size?: 'sm' | 'md';
 }
 
-export function PlayingCard({ card, hidden = false, size = 'md' }: Props) {
+export const PlayingCard = memo(function PlayingCard({ card, hidden = false, size = 'md' }: Props) {
   const w = size === 'sm' ? 46 : 60;
   const h = size === 'sm' ? 64 : 84;
   const rankSize = size === 'sm' ? 15 : 20;
@@ -32,7 +33,7 @@ export function PlayingCard({ card, hidden = false, size = 'md' }: Props) {
       </View>
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   wrap:    { position: 'relative', alignItems: 'center', justifyContent: 'center' },

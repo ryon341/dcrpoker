@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
@@ -5,7 +6,7 @@ interface Props {
   streak: number;
 }
 
-export function StreakBadge({ streak }: Props) {
+export const StreakBadge = memo(function StreakBadge({ streak }: Props) {
   if (streak < 2) return null;
 
   return (
@@ -32,7 +33,7 @@ export function StreakBadge({ streak }: Props) {
       <Text style={s.count}>{streak}</Text>
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   outer: {

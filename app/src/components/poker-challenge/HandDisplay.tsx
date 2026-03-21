@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, memo } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { PlayingCard } from './PlayingCard';
 import { T } from '../ui/Theme';
@@ -14,7 +14,7 @@ interface Props {
   showRiver?: boolean;
 }
 
-export function HandDisplay({
+export const HandDisplay = memo(function HandDisplay({
   heroHand,
   villainHand,
   villainRevealed,
@@ -71,7 +71,7 @@ export function HandDisplay({
       </View>
     </View>
   );
-}
+});
 
 const s = StyleSheet.create({
   outer:      { alignItems: 'center', paddingVertical: 12, gap: 14 },

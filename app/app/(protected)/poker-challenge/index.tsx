@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef, useMemo } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
 import { T }                    from '../../../src/components/ui/Theme';
 import { TIMING }               from '../../../src/components/poker-challenge/animations';
@@ -152,9 +152,12 @@ export default function PokerChallengePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressLoaded]);
 
-  const challenge = gs.currentChallenge;
-  const pointsRequired = getPointsRequired(gs.level);
-  const showGuestPromo = isGuest && gs.level >= 4;
+  const challenge         = gs.currentChallenge;
+  const pointsRequired    = useMemo(() => getPointsRequired(gs.level), [gs.level]);
+  const showGuestPromo    = useMemo(() => isGuest && gs.level >= 4, [isGuest, gs.level]);
+  const currentTitle      = useMemo(() => getTitleForLevel(gs.level), [gs.level]);
+  const nextTitleInfo     = useMemo(() => getNextTitle(gs.level), [gs.level]);
+  const titleJustUnlocked = useMemo(() => isTitleUnlockLevel(gs.level), [gs.level]);
 
   // Derived reveal flags
   const buttonsLocked    = revealPhase >= 1;
@@ -303,10 +306,6 @@ export default function PokerChallengePage() {
     await resetProgress();
     setGs(makeInitialState());
   }
-
-  const currentTitle = getTitleForLevel(gs.level);
-  const nextTitleInfo = getNextTitle(gs.level);
-  const titleJustUnlocked = isTitleUnlockLevel(gs.level);
 
   return (
     <ImageBackground
