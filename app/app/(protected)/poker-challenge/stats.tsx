@@ -72,7 +72,7 @@ export default function StatsPage() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/poker-bg.png')}
+      source={require('../../../assets/asset01.jpg')}
       style={s.bg}
       resizeMode="cover"
     >
