@@ -22,6 +22,8 @@ import { getInitialStats, applyHandStats, applyWheelStats, applyLevelProgress } 
 import type { PokerStats }     from '../../../src/components/poker-challenge/stats';
 import { getTitleForLevel, getNextTitle, isTitleUnlockLevel } from '../../../src/components/poker-challenge/titleSystem';
 import { DailyChallengeCard } from '../../../src/components/poker-challenge/DailyChallengeCard';
+import { AdBreakModal }       from '../../../src/components/poker-challenge/AdBreakModal';
+import { canShowAd, markAdShown } from '../../../src/components/poker-challenge/adBreakStorage';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
 import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
@@ -63,6 +65,7 @@ function makeInitialState(): GameState {
 export default function PokerChallengePage() {
   const { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress } = usePokerProgress();
   const [gs, setGs] = useState<GameState>(makeInitialState);
+  const [showEntryAd, setShowEntryAd] = useState(false);
 
   // â”€â”€ Staged reveal state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // 0=idle, 2=correctness, 3=explanation, 4=villain, 5=flop, 6=turn,
@@ -97,6 +100,7 @@ export default function PokerChallengePage() {
       stats:            savedProgress.stats ?? getInitialStats(),
     }));
     setRevealPhase(0);
+    canShowAd('main').then(show => { if (show) setShowEntryAd(true); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressLoaded]);
 
@@ -367,6 +371,15 @@ export default function PokerChallengePage() {
         visible={gs.loginRequiredForNextLevel}
         onStartOver={handleStartOver}
         onClose={() => setGs(prev => ({ ...prev, loginRequiredForNextLevel: false }))}
+      />
+
+      <AdBreakModal
+        visible={showEntryAd}
+        variant="main"
+        onComplete={async () => {
+          setShowEntryAd(false);
+          await markAdShown('main');
+        }}
       />
     </ImageBackground>
   );

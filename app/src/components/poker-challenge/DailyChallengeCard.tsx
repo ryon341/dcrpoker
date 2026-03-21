@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { getTodayDateString } from './dailyChallenge';
 import { loadDailyProgress } from './dailyStorage';
 import type { DailyChallengeProgress } from './dailyStorage';
+import { AdBreakModal } from './AdBreakModal';
+import { canShowAd, markAdShown } from './adBreakStorage';
 
 type Status = 'loading' | 'not-started' | 'in-progress' | 'completed';
 
@@ -16,6 +18,7 @@ export function DailyChallengeCard() {
 
   const [status, setStatus] = useState<Status>('loading');
   const [saved, setSaved]   = useState<DailyChallengeProgress | null>(null);
+  const [showAd, setShowAd] = useState(false);
   const todayId = getTodayDateString();
 
   useEffect(() => {
@@ -67,11 +70,26 @@ export function DailyChallengeCard() {
       {status !== 'loading' && (
         <TouchableOpacity
           style={[s.btn, done && s.btnOutline]}
-          onPress={() => router.push('/poker-challenge/daily' as any)}
+          onPress={async () => {
+            if (done) { router.push('/poker-challenge/daily' as any); return; }
+            const show = await canShowAd('daily');
+            if (show) { setShowAd(true); }
+            else { router.push('/poker-challenge/daily' as any); }
+          }}
           activeOpacity={0.8}
         >
           <Text style={[s.btnText, done && s.btnTextOutline]}>{btnLabel}</Text>
         </TouchableOpacity>
+
+        <AdBreakModal
+          visible={showAd}
+          variant="daily"
+          onComplete={async () => {
+            setShowAd(false);
+            await markAdShown('daily');
+            router.push('/poker-challenge/daily' as any);
+          }}
+        />
       )}
     </View>
   );
