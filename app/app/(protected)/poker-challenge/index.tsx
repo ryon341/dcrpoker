@@ -24,6 +24,8 @@ import { getTitleForLevel, getNextTitle, isTitleUnlockLevel } from '../../../src
 import { DailyChallengeCard } from '../../../src/components/poker-challenge/DailyChallengeCard';
 import { AdBreakModal }       from '../../../src/components/poker-challenge/AdBreakModal';
 import { canShowAd, markAdShown } from '../../../src/components/poker-challenge/adBreakStorage';
+import { getAuthReturnTarget, clearAuthReturnTarget } from '../../../src/components/poker-challenge/authReturn';
+import { PostAuthResumeBanner } from '../../../src/components/poker-challenge/PostAuthResumeBanner';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
 import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
@@ -63,9 +65,10 @@ function makeInitialState(): GameState {
 }
 
 export default function PokerChallengePage() {
-  const { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress } = usePokerProgress();
+  const { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress, didMigrateGuestProgress } = usePokerProgress();
   const [gs, setGs] = useState<GameState>(makeInitialState);
-  const [showEntryAd, setShowEntryAd] = useState(false);
+  const [showEntryAd, setShowEntryAd]     = useState(false);
+  const [postAuthMessage, setPostAuthMessage] = useState('');
 
   // â”€â”€ Staged reveal state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // 0=idle, 2=correctness, 3=explanation, 4=villain, 5=flop, 6=turn,
@@ -100,7 +103,50 @@ export default function PokerChallengePage() {
       stats:            savedProgress.stats ?? getInitialStats(),
     }));
     setRevealPhase(0);
-    canShowAd('main').then(show => { if (show) setShowEntryAd(true); });
+
+    // Check for post-auth return (Level 6 gate or manual login)
+    getAuthReturnTarget().then(async (target) => {
+      if (
+        !isGuest &&
+        target?.pendingAdvanceLevel &&
+        target.source === 'level6-gate' &&
+        level <= MAX_GUEST_LEVEL
+      ) {
+        await clearAuthReturnTarget();
+        const nextLevel    = level + 1;
+        const newHistory: string[] = [];
+        const nextChallenge = getNextChallenge({ level: nextLevel, history: newHistory });
+        const nextStats     = applyLevelProgress(savedProgress.stats ?? getInitialStats(), nextLevel);
+        setGs(prev => ({
+          ...prev,
+          level: nextLevel,
+          levelComplete: false,
+          loginRequiredForNextLevel: false,
+          currentChallenge: nextChallenge,
+          challengeHistory: newHistory,
+          stats: nextStats,
+        }));
+        saveProgress({
+          level:                 nextLevel,
+          score:                 savedProgress.score,
+          handsCompleted:        savedProgress.handsCompleted,
+          currentChallengeIndex: 0,
+          currentChallengeId:    nextChallenge.id,
+          challengeHistory:      newHistory,
+          wheelPending:          false,
+          lastWheelResult:       null,
+          updatedAt:             new Date().toISOString(),
+          stats:                 nextStats,
+        });
+        setPostAuthMessage(
+          didMigrateGuestProgress
+            ? 'Progress transferred. Level 6 unlocked.'
+            : 'Welcome back. Progress restored.',
+        );
+      } else {
+        canShowAd('main').then(show => { if (show) setShowEntryAd(true); });
+      }
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressLoaded]);
 
@@ -380,6 +426,12 @@ export default function PokerChallengePage() {
           setShowEntryAd(false);
           await markAdShown('main');
         }}
+      />
+
+      <PostAuthResumeBanner
+        message={postAuthMessage}
+        visible={!!postAuthMessage}
+        onDismiss={() => setPostAuthMessage('')}
       />
     </ImageBackground>
   );

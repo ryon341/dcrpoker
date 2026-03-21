@@ -1,6 +1,7 @@
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { T } from '../ui/Theme';
+import { setAuthReturnTarget } from './authReturn';
 
 interface Props {
   visible: boolean;
@@ -18,14 +19,24 @@ export function LoginGateModal({ visible, onStartOver, onClose }: Props) {
           <Text style={s.title}>Save Your Progress 🏆</Text>
 
           <Text style={s.body}>
-            Levels 1–5 are free to play for everyone.{'\n\n'}
-            Level 6 and beyond requires a free account — sign up to save your run,
-            unlock all levels, and track your leaderboard position.
+            You've completed the free levels. Log in or create an account to save
+            your run and unlock Level 6+.
+          </Text>
+
+          <Text style={s.migrationNote}>
+            Your current guest run will be moved to your account.
           </Text>
 
           <TouchableOpacity
             style={s.primaryBtn}
-            onPress={() => router.push('/(auth)/login' as any)}
+            onPress={async () => {
+              await setAuthReturnTarget({
+                route: '/poker-challenge',
+                source: 'level6-gate',
+                pendingAdvanceLevel: true,
+              });
+              router.push('/(auth)/login?returnTo=%2Fpoker-challenge' as any);
+            }}
           >
             <Text style={s.primaryBtnText}>Log In / Sign Up</Text>
           </TouchableOpacity>
@@ -73,7 +84,14 @@ const s = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 10,
+  },
+  migrationNote: {
+    color: T.muted,
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontStyle: 'italic',
   },
   primaryBtn: {
     width: '100%',

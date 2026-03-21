@@ -7,6 +7,7 @@ import { Link, useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { pendingInvite } from '../../src/utils/pendingInvite';
 import { T } from '../../src/components/ui/Theme';
+import { getAuthReturnTarget } from '../../src/components/poker-challenge/authReturn';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
@@ -39,6 +40,12 @@ export default function RegisterScreen() {
       if (code) {
         await pendingInvite.clear();
         router.replace(`/invite/${code}`);
+        return;
+      }
+      // Check for poker challenge auth return (do NOT clear — index.tsx will clear it)
+      const authTarget = await getAuthReturnTarget();
+      if (authTarget) {
+        router.replace(authTarget.route as any);
         return;
       }
       // Navigation handled by root layout

@@ -16,8 +16,9 @@ export function usePokerProgress() {
   const isGuest = !user;
   const userId  = user ? String(user.id) : null;
 
-  const [savedProgress, setSavedProgress]   = useState<PokerChallengeProgress | null>(null);
-  const [progressLoaded, setProgressLoaded] = useState(false);
+  const [savedProgress, setSavedProgress]         = useState<PokerChallengeProgress | null>(null);
+  const [progressLoaded, setProgressLoaded]       = useState(false);
+  const [didMigrateGuestProgress, setDidMigrate] = useState(false);
 
   // Load correct progress once auth resolves
   useEffect(() => {
@@ -45,6 +46,7 @@ export function usePokerProgress() {
             }
             await saveUserProgress(userId, guest);
             await clearGuestProgress();
+            setDidMigrate(true);
             progress = guest;
           }
         }
@@ -89,5 +91,5 @@ export function usePokerProgress() {
     setSavedProgress(null);
   }, [isGuest, userId]);
 
-  return { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress };
+  return { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress, didMigrateGuestProgress };
 }
