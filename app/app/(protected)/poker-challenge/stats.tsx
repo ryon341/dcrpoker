@@ -183,7 +183,9 @@ export default function StatsPage() {
           </View>
         )}
 
-        <View style={s.bottomPad} />
+        <View style={s.bottomPad}>
+          <Text style={s.buildLabel}>v1.0.0</Text>
+        </View>
       </ScrollView>
     </ImageBackground>
   );
@@ -214,5 +216,6 @@ const s = StyleSheet.create({
   emptyTitle:   { color: T.white, fontWeight: '700', fontSize: 18 },
   emptyBody:    { color: T.muted, fontSize: 14, textAlign: 'center', lineHeight: 20 },
   emptyText:    { color: T.muted, textAlign: 'center', marginTop: 40 },
-  bottomPad:    { height: 60 },
+  bottomPad:    { height: 60, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 },
+  buildLabel:   { color: 'rgba(120,113,108,0.35)', fontSize: 10, letterSpacing: 0.8 },
 });
