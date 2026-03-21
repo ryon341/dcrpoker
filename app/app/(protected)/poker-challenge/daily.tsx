@@ -23,6 +23,7 @@ import {
   DailyChallengeProgress,
   DailyChallengeAnswer,
 } from '../../../src/components/poker-challenge/dailyStorage';
+import { pokerProgressApi } from '../../../src/api/pokerProgress';
 import type { Challenge } from '../../../src/components/poker-challenge/challengeTypes';
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -103,7 +104,24 @@ export default function DailyChallengePage() {
   // Load saved daily progress
   useEffect(() => {
     (async () => {
-      const saved = await loadDailyProgress(userId);
+      let saved: DailyChallengeProgress | null = null;
+
+      if (userId) {
+        // Try backend first
+        try {
+          saved = await pokerProgressApi.loadDailyProgress(todayId);
+        } catch {
+          // offline fallback
+          saved = await loadDailyProgress(userId);
+          if (saved && saved.dailyId !== todayId) saved = null;
+        }
+        // Also mirror to local storage for offline use
+        if (saved) saveDailyProgress(saved, userId).catch(() => {});
+      } else {
+        saved = await loadDailyProgress(null);
+        if (saved && saved.dailyId !== todayId) saved = null;
+      }
+
       const state = buildState(todayId, saved);
       setDs(state);
       if (state.completed) setShowResults(true);
@@ -147,14 +165,19 @@ export default function DailyChallengePage() {
 
   function persist(state: DailyState) {
     const progress: DailyChallengeProgress = {
-      dailyId:     state.dailyId,
-      completed:   state.completed,
+      dailyId:      state.dailyId,
+      completed:    state.completed,
       currentIndex: state.currentIndex,
       score:        state.score,
       answers:      state.answers,
       completedAt:  state.completed ? new Date().toISOString() : null,
     };
-    saveDailyProgress(progress, userId);
+    // Local backup
+    saveDailyProgress(progress, userId).catch(() => {});
+    // Backend sync (fire and forget)
+    if (userId) {
+      pokerProgressApi.saveDailyProgress(state.dailyId, progress).catch(() => {});
+    }
   }
 
   function handleAnswer(answer: 'yes' | 'no') {
