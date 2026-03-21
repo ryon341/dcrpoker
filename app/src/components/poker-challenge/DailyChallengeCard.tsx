@@ -80,17 +80,17 @@ export function DailyChallengeCard() {
         >
           <Text style={[s.btnText, done && s.btnTextOutline]}>{btnLabel}</Text>
         </TouchableOpacity>
-
-        <AdBreakModal
-          visible={showAd}
-          variant="daily"
-          onComplete={async () => {
-            setShowAd(false);
-            await markAdShown('daily');
-            router.push('/poker-challenge/daily' as any);
-          }}
-        />
       )}
+
+      <AdBreakModal
+        visible={showAd}
+        variant="daily"
+        onComplete={async () => {
+          setShowAd(false);
+          await markAdShown('daily');
+          router.push('/poker-challenge/daily' as any);
+        }}
+      />
     </View>
   );
 }
