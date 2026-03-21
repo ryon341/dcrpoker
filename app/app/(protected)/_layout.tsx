@@ -41,7 +41,6 @@ export default function ProtectedLayout() {
       <Stack.Screen name="arcade/memory"                  options={{ title: 'Card Memory' }} />
       <Stack.Screen name="arcade/solitaire"               options={{ title: 'Poker Solitaire' }} />
       <Stack.Screen name="arcade/blackjack"               options={{ title: 'Mini Blackjack' }} />
-      <Stack.Screen name="arcade/reaction"                options={{ title: 'Reaction Timer' }} />
-    </Stack>
+      <Stack.Screen name="arcade/reaction"                options={{ title: 'Reaction Timer' }} />      <Stack.Screen name="poker-challenge/index"              options={{ title: 'Poker Challenge' }} />    </Stack>
   );
 }

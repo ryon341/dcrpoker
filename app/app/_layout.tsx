@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 
 // Routes inside (protected) that are accessible without login
-const PUBLIC_PROTECTED = new Set(['arcade', 'tools', 'gear']);
+const PUBLIC_PROTECTED = new Set(['arcade', 'tools', 'gear', 'poker-challenge']);
 
 function RootNavigator() {
   const { user, isLoading } = useAuth();
