@@ -21,6 +21,7 @@ import { StreakBadge }         from '../../../src/components/poker-challenge/Str
 import { getInitialStats, applyHandStats, applyWheelStats, applyLevelProgress } from '../../../src/components/poker-challenge/stats';
 import type { PokerStats }     from '../../../src/components/poker-challenge/stats';
 import { getTitleForLevel, getNextTitle, isTitleUnlockLevel } from '../../../src/components/poker-challenge/titleSystem';
+import { DailyChallengeCard } from '../../../src/components/poker-challenge/DailyChallengeCard';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
 import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
@@ -334,6 +335,10 @@ export default function PokerChallengePage() {
           )}
 
         </View>
+
+        {/* Daily Challenge entry card */}
+        <DailyChallengeCard />
+
       </ScrollView>
 
       {/* Floating score delta popup */}
