@@ -1,4 +1,5 @@
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, Text, StyleSheet } from 'react-native';
+import { T } from '../ui/Theme';
 
 interface Props {
   result: 'correct' | 'incorrect' | null;
