@@ -114,10 +114,13 @@ export default function HomeScreen() {
       </View>
 
       {/* ── Tools & Resources ── */}
-      {(FEATURES.ENABLE_TOOLS || FEATURES.ENABLE_GEAR || FEATURES.ENABLE_PUBLIC_GAMES || FEATURES.ENABLE_ARCADE) ? (
+      {(FEATURES.ENABLE_TOOLS || FEATURES.ENABLE_GEAR || FEATURES.ENABLE_PUBLIC_GAMES || FEATURES.ENABLE_ARCADE || FEATURES.ENABLE_POKER_CHALLENGE) ? (
         <>
           <SectionHead label="Tools & Resources" />
           <View style={d.tileGrid}>
+            {FEATURES.ENABLE_POKER_CHALLENGE ? (
+              <NavTile icon="🎯" label="Daily Challenge" onPress={() => router.push('/(protected)/poker-challenge')} />
+            ) : null}
             {FEATURES.ENABLE_TOOLS ? (
               <NavTile icon="🎰" label="Poker Tools" onPress={() => router.push('/(protected)/tools')} />
             ) : null}
@@ -126,9 +129,11 @@ export default function HomeScreen() {
             ) : null}
             {FEATURES.ENABLE_PUBLIC_GAMES ? (
               <NavTile icon="📍" label="Public Games" onPress={() => router.push('/(protected)/public-games')} />
-            ) : null}            {FEATURES.ENABLE_ARCADE ? (
+            ) : null}
+            {FEATURES.ENABLE_ARCADE ? (
               <NavTile icon="🎮" label="Arcade" onPress={() => router.push('/(protected)/arcade')} />
-            ) : null}          </View>
+            ) : null}
+          </View>
         </>
       ) : null}
 
