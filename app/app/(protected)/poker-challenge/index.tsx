@@ -16,6 +16,11 @@ import { LevelCompleteModal }   from '../../../src/components/poker-challenge/Le
 import { LoginGateModal }       from '../../../src/components/poker-challenge/LoginGateModal';
 import { getNextChallenge }     from '../../../src/components/poker-challenge/challengeSelector';
 import { getScoreDelta, applyScore, getPointsRequired } from '../../../src/components/poker-challenge/scoring';
+import { StatsPanel }          from '../../../src/components/poker-challenge/StatsPanel';
+import { StreakBadge }         from '../../../src/components/poker-challenge/StreakBadge';
+import { getInitialStats, applyHandStats, applyWheelStats, applyLevelProgress } from '../../../src/components/poker-challenge/stats';
+import type { PokerStats }     from '../../../src/components/poker-challenge/stats';
+import { getTitleForLevel, getNextTitle, isTitleUnlockLevel } from '../../../src/components/poker-challenge/titleSystem';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
 import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
@@ -34,6 +39,7 @@ interface GameState {
   wheelPending: boolean;
   levelComplete: boolean;
   loginRequiredForNextLevel: boolean;
+  stats: PokerStats;
 }
 
 function makeInitialState(): GameState {
@@ -49,6 +55,7 @@ function makeInitialState(): GameState {
     wheelPending: false,
     levelComplete: false,
     loginRequiredForNextLevel: false,
+    stats: getInitialStats(),
   };
 }
 
@@ -77,14 +84,16 @@ export default function PokerChallengePage() {
   useEffect(() => {
     if (!progressLoaded || !savedProgress) return;
     const level = isGuest ? Math.min(savedProgress.level, MAX_GUEST_LEVEL) : savedProgress.level;
+    const history = savedProgress.challengeHistory ?? [];
     setGs(prev => ({
       ...prev,
       level,
       score:            savedProgress.score,
       handsCompleted:   savedProgress.handsCompleted,
-      currentChallenge: getNextChallenge({ level, history: [] }),
-      challengeHistory: [],
+      currentChallenge: getNextChallenge({ level, history }),
+      challengeHistory: history,
       wheelPending:     savedProgress.wheelPending,
+      stats:            savedProgress.stats ?? getInitialStats(),
     }));
     setRevealPhase(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,9 +139,12 @@ export default function PokerChallengePage() {
       score:                 state.score,
       handsCompleted:        state.handsCompleted,
       currentChallengeIndex: 0,
+      currentChallengeId:    state.currentChallenge.id,
+      challengeHistory:      state.challengeHistory,
       wheelPending:          state.wheelPending,
       lastWheelResult:       null,
       updatedAt:             new Date().toISOString(),
+      stats:                 state.stats,
       ...extra,
     };
   }
@@ -148,6 +160,7 @@ export default function PokerChallengePage() {
       lastScoreDelta: delta,
       lastResultType: isCorrect ? 'correct' : 'incorrect',
       score: newScore,
+      stats: applyHandStats(gs.stats, { isCorrect, heroWins: challenge.heroWins }),
     };
     setGs(next);
     setRevealPhase(1);
@@ -184,7 +197,13 @@ export default function PokerChallengePage() {
   function handleWheelResult(pts: number) {
     const newScore = applyScore(gs.score, pts);
     const lvlDone  = newScore >= getPointsRequired(gs.level);
-    const next: GameState = { ...gs, wheelPending: false, score: newScore, levelComplete: lvlDone };
+    const next: GameState = {
+      ...gs,
+      wheelPending: false,
+      score: newScore,
+      levelComplete: lvlDone,
+      stats: applyWheelStats(gs.stats, pts),
+    };
     setGs(next);
     saveProgress(snap(next, { lastWheelResult: pts }));
     setDeltaPop({ value: pts, show: true });
@@ -204,6 +223,7 @@ export default function PokerChallengePage() {
       loginRequiredForNextLevel: false,
       currentChallenge: getNextChallenge({ level: nextLevel, history: newHistory }),
       challengeHistory: newHistory,
+      stats: applyLevelProgress(gs.stats, nextLevel),
     };
     setGs(next);
     saveProgress(snap(next));
@@ -216,6 +236,10 @@ export default function PokerChallengePage() {
     await resetProgress();
     setGs(makeInitialState());
   }
+
+  const currentTitle = getTitleForLevel(gs.level);
+  const nextTitleInfo = getNextTitle(gs.level);
+  const titleJustUnlocked = isTitleUnlockLevel(gs.level);
 
   return (
     <ImageBackground
@@ -239,11 +263,20 @@ export default function PokerChallengePage() {
           </View>
 
           {/* Header */}
-          <ChallengeHeader level={gs.level} points={gs.score} pointsRequired={pointsRequired} />
+          <ChallengeHeader
+            level={gs.level}
+            points={gs.score}
+            pointsRequired={pointsRequired}
+            title={currentTitle}
+            streak={gs.stats.currentStreak}
+          />
+
+          {/* Stats panel */}
+          <StatsPanel stats={gs.stats} level={gs.level} />
 
           <View style={s.divider} />
 
-          {/* Challenge label + question */}
+          {/* Challenge label + question */}}
           <View style={s.section}>
             <Text style={s.sectionLabel}>Challenge #{gs.handsCompleted + 1}</Text>
             <QuestionPanel
@@ -279,6 +312,7 @@ export default function PokerChallengePage() {
             <ContinuePanel
               scoreDelta={gs.lastScoreDelta}
               heroWins={challenge.heroWins}
+              streak={gs.stats.currentStreak}
               onContinue={handleContinue}
             />
           )}
@@ -318,6 +352,9 @@ export default function PokerChallengePage() {
         level={gs.level}
         score={gs.score}
         nextThreshold={getPointsRequired(gs.level + 1)}
+        currentTitle={currentTitle}
+        nextTitleInfo={nextTitleInfo}
+        titleJustUnlocked={titleJustUnlocked}
         onAdvance={handleAdvanceLevel}
       />
 

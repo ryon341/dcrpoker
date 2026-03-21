@@ -1,13 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { PokerStats } from './stats';
 
 export type PokerChallengeProgress = {
   level: number;
   score: number;
   handsCompleted: number;
-  currentChallengeIndex: number;
+  currentChallengeIndex: number;   // legacy, kept as 0
+  currentChallengeId?: string | null;
+  challengeHistory: string[];
   wheelPending: boolean;
   lastWheelResult: number | null;
   updatedAt: string;
+  stats: PokerStats;
 };
 
 const GUEST_KEY        = 'dcr_poker_challenge_guest';

@@ -3,14 +3,17 @@ import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react
 import { T } from '../ui/Theme';
 
 interface Props {
-  visible:       boolean;
-  level:         number;
-  score:         number;
-  nextThreshold: number;
-  onAdvance:     () => void;
+  visible:          boolean;
+  level:            number;
+  score:            number;
+  nextThreshold:    number;
+  currentTitle:     string;
+  nextTitleInfo:    { title: string; unlockLevel: number } | null;
+  titleJustUnlocked: boolean;
+  onAdvance:        () => void;
 }
 
-export function LevelCompleteModal({ visible, level, score, nextThreshold, onAdvance }: Props) {
+export function LevelCompleteModal({ visible, level, score, nextThreshold, currentTitle, nextTitleInfo, titleJustUnlocked, onAdvance }: Props) {
   const cardAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -40,6 +43,14 @@ export function LevelCompleteModal({ visible, level, score, nextThreshold, onAdv
           </View>
 
           <Text style={s.badgePill}>LEVEL {level} COMPLETE</Text>
+
+          {/* Title unlock banner */}
+          {titleJustUnlocked && (
+            <View style={s.titleBanner}>
+              <Text style={s.titleBannerText}>🏆 Title Unlocked: {currentTitle}</Text>
+            </View>
+          )}
+
           <Text style={s.title}>Well played!</Text>
           <Text style={s.sub}>
             Your score carries forward into Level {level + 1}.
@@ -64,6 +75,14 @@ export function LevelCompleteModal({ visible, level, score, nextThreshold, onAdv
 
           <Text style={s.nextLabel}>Advancing to</Text>
           <Text style={s.nextLevel}>Level {level + 1}</Text>
+
+          {/* Current title + next title hint */}
+          <View style={s.titleRow}>
+            <Text style={s.titleCurrent}>{currentTitle}</Text>
+            {nextTitleInfo && (
+              <Text style={s.titleNext}>Next: {nextTitleInfo.title} at Lvl {nextTitleInfo.unlockLevel}</Text>
+            )}
+          </View>
 
           <TouchableOpacity style={s.btn} onPress={onAdvance} activeOpacity={0.8}>
             <Text style={s.btnText}>Advance to Level {level + 1} →</Text>
@@ -92,6 +111,11 @@ const s = StyleSheet.create({
   divider:        { height: 1, backgroundColor: T.border, alignSelf: 'stretch', marginVertical: 4 },
   nextLabel:      { color: T.muted, fontSize: 12, letterSpacing: 1 },
   nextLevel:      { color: T.gold, fontSize: 22, fontWeight: 'bold' },
+  titleBanner:    { backgroundColor: 'rgba(251,191,36,0.18)', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 7, borderWidth: 1, borderColor: T.gold },
+  titleBannerText: { color: T.gold, fontSize: 13, fontWeight: '700' },
+  titleRow:       { alignItems: 'center', gap: 2 },
+  titleCurrent:   { color: T.white, fontSize: 14, fontWeight: '700' },
+  titleNext:      { color: T.muted, fontSize: 11 },
   btn:            { backgroundColor: T.gold, paddingHorizontal: 32, paddingVertical: 15, borderRadius: 24, marginTop: 6, alignSelf: 'stretch', alignItems: 'center' },
   btnText:        { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },
 });

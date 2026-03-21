@@ -5,10 +5,11 @@ import { T } from '../ui/Theme';
 interface Props {
   scoreDelta: number;
   heroWins:   boolean;
+  streak:     number;
   onContinue: () => void;
 }
 
-export function ContinuePanel({ scoreDelta, heroWins, onContinue }: Props) {
+export function ContinuePanel({ scoreDelta, heroWins, streak, onContinue }: Props) {
   const fadeAnim      = useRef(new Animated.Value(0)).current;
   const slideAnim     = useRef(new Animated.Value(12)).current;
   const deltaPositive = scoreDelta >= 0;
@@ -37,6 +38,14 @@ export function ContinuePanel({ scoreDelta, heroWins, onContinue }: Props) {
         </Text>
       </View>
 
+      {/* Streak feedback */}
+      {streak >= 2 && (
+        <Text style={s.streakLine}>🔥 {streak} in a row</Text>
+      )}
+      {scoreDelta < 0 && streak === 0 && (
+        <Text style={s.streakBroken}>Streak broken</Text>
+      )}
+
       {/* Continue */}
       <TouchableOpacity style={s.btn} onPress={onContinue} activeOpacity={0.8}>
         <Text style={s.btnText}>Continue →</Text>
@@ -58,6 +67,8 @@ const s = StyleSheet.create({
   deltaValue:    { fontSize: 28, fontWeight: 'bold' },
   pos:           { color: '#4caf50' },
   neg:           { color: '#e94560' },
+  streakLine:    { color: T.gold, fontSize: 13, fontWeight: '600' },
+  streakBroken:  { color: T.muted, fontSize: 12 },
   btn:           { backgroundColor: T.gold, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 24 },
   btnText:       { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },
 });
