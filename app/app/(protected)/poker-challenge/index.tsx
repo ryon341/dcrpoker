@@ -366,9 +366,6 @@ const s = StyleSheet.create({
   },
 });
 
-const SCORE_TABLE     = { correctWin: 13, correctLose: 7, incorrectWin: -5, incorrectLose: -10 };
-const MAX_GUEST_LEVEL = 5;
-
 interface GameState {
   level: number;
   score: number;
