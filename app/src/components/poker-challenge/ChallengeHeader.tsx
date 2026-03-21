@@ -1,4 +1,5 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { T } from '../ui/Theme';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function ChallengeHeader({ level, points, pointsRequired, title, streak }: Props) {
+  const router = useRouter();
   const progress = Math.min(points / pointsRequired, 1);
 
   return (
@@ -24,6 +26,12 @@ export function ChallengeHeader({ level, points, pointsRequired, title, streak }
           <Text style={s.titleText}>{title}</Text>
           {streak >= 2 && <Text style={s.streakText}>🔥 {streak}</Text>}
         </View>
+        <TouchableOpacity
+          onPress={() => router.push('/poker-challenge/stats' as any)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={s.statsBtn}>Stats</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Points + chip */}
@@ -52,6 +60,7 @@ const s = StyleSheet.create({
   titleStreakWrap:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titleText:       { color: T.muted, fontSize: 11, fontWeight: '600' },
   streakText:      { color: T.white, fontSize: 12, fontWeight: '700' },
+  statsBtn:        { color: T.gold, fontSize: 11, fontWeight: '700' },
   pointsWrap:      { flexDirection: 'row', alignItems: 'center', gap: 6 },
   chip:            { width: 22, height: 22 },
   points:          { color: T.white, fontWeight: '700', fontSize: 18 },
