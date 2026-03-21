@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, Image,
-  StyleSheet, Linking, Animated, ImageBackground,
+  StyleSheet, Animated, ImageBackground,
 } from 'react-native';
 import { T } from '../ui/Theme';
+import { trackAdEvent } from './adAnalytics';
+import { openDeerCreekRoad } from './adClick';
 
 export type AdBreakModalProps = {
   visible: boolean;
@@ -53,6 +55,9 @@ export function AdBreakModal({
   const intervalRef             = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCompleteRef           = useRef(onComplete);
   const endingTickRef           = useRef(Math.round(durationSeconds / (TICK_MS / 1000)));
+  const completeFiredRef        = useRef(false);
+
+  const trackingMode = variant === 'daily' ? 'daily' : 'main' as const;
 
   // Keep callback ref fresh
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
@@ -71,13 +76,16 @@ export function AdBreakModal({
       if (intervalRef.current) clearInterval(intervalRef.current);
       setElapsed(0);
       setPhase('loading');
+      completeFiredRef.current = false;
       return;
     }
 
     // Reset and start
     setElapsed(0);
     setPhase('loading');
+    completeFiredRef.current = false;
     endingTickRef.current = Math.round(durationSeconds / (TICK_MS / 1000));
+    trackAdEvent({ type: 'impression', mode: trackingMode, timestamp: new Date().toISOString() });
 
     let ticks = 0;
     intervalRef.current = setInterval(() => {
@@ -98,6 +106,10 @@ export function AdBreakModal({
       if (ticks >= doneTick) {
         clearInterval(intervalRef.current!);
         intervalRef.current = null;
+        if (!completeFiredRef.current) {
+          completeFiredRef.current = true;
+          trackAdEvent({ type: 'complete', mode: trackingMode, timestamp: new Date().toISOString() });
+        }
         onCompleteRef.current();
       }
     }, TICK_MS);
@@ -122,11 +134,16 @@ export function AdBreakModal({
 
   function handleComplete() {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!completeFiredRef.current) {
+      completeFiredRef.current = true;
+      trackAdEvent({ type: 'complete', mode: trackingMode, timestamp: new Date().toISOString() });
+    }
     onCompleteRef.current();
   }
 
   function handleSkip() {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    trackAdEvent({ type: 'skip', mode: trackingMode, timestamp: new Date().toISOString() });
     (onSkip ?? onCompleteRef.current)();
   }
 
@@ -169,7 +186,10 @@ export function AdBreakModal({
 
             <TouchableOpacity
               style={s.ctaCard}
-              onPress={() => Linking.openURL('https://www.deercreekroad.com')}
+              onPress={() => {
+                trackAdEvent({ type: 'click', mode: trackingMode, timestamp: new Date().toISOString() });
+                openDeerCreekRoad();
+              }}
               activeOpacity={0.82}
             >
               <View pointerEvents="none" style={s.ctaClickOverlay}>
@@ -193,7 +213,10 @@ export function AdBreakModal({
 
             <TouchableOpacity
               style={s.ctaCardEnd}
-              onPress={() => Linking.openURL('https://www.deercreekroad.com')}
+              onPress={() => {
+                trackAdEvent({ type: 'click', mode: trackingMode, timestamp: new Date().toISOString() });
+                openDeerCreekRoad();
+              }}
               activeOpacity={0.82}
             >
               <View pointerEvents="none" style={s.ctaHighlightWrap}>
