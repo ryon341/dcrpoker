@@ -1,5 +1,7 @@
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
+import { playSound } from './gameAudio';
+import { triggerTapHaptic } from './gameHaptics';
 
 interface Props {
   onYes: () => void;
@@ -12,7 +14,7 @@ export function DecisionButtons({ onYes, onNo, disabled = false, selected = null
   return (
     <View style={s.row}>
       <Pressable
-        onPress={disabled ? undefined : onYes}
+        onPress={disabled ? undefined : () => { playSound('tap'); triggerTapHaptic(); onYes(); }}
         style={({ pressed }) =>
           selected === 'yes' ? [s.btn, s.btnSelected]
           : disabled         ? [s.btn, s.btnDimmed]
@@ -25,7 +27,7 @@ export function DecisionButtons({ onYes, onNo, disabled = false, selected = null
       </Pressable>
 
       <Pressable
-        onPress={disabled ? undefined : onNo}
+        onPress={disabled ? undefined : () => { playSound('tap'); triggerTapHaptic(); onNo(); }}
         style={({ pressed }) =>
           selected === 'no' ? [s.btn, s.btnSelected]
           : disabled        ? [s.btn, s.btnDimmed]

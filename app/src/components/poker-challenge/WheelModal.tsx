@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, Image, Modal, Animated, Easing, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 import { getWheelSlots } from './wheel';
+import { playSound } from './gameAudio';
+import { triggerTapHaptic, triggerRewardHaptic } from './gameHaptics';
 
 const WHEEL_POOL = getWheelSlots();
 const SLOT_DEG   = 360 / WHEEL_POOL.length;
@@ -29,6 +31,8 @@ export function WheelModal({ visible, onResult }: Props) {
 
   function handleSpin() {
     if (spinning || spun) return;
+    playSound('tap');
+    triggerTapHaptic();
     const idx  = Math.floor(Math.random() * WHEEL_POOL.length);
     const pts  = WHEEL_POOL[idx];
     const target = 5 * 360 + idx * SLOT_DEG;
@@ -44,11 +48,15 @@ export function WheelModal({ visible, onResult }: Props) {
       setSpinning(false);
       setSpun(true);
       setResult(pts);
+      playSound('wheelReward');
+      triggerRewardHaptic();
     });
   }
 
   function handleClaim() {
     if (result !== null) {
+      playSound('tap');
+      triggerTapHaptic();
       onResult(result);
       setSpun(false);
       setResult(null);

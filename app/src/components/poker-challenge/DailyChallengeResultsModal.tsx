@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react
 import { T } from '../ui/Theme';
 import type { DailyChallengeAnswer } from './dailyStorage';
 import { DAILY_HAND_COUNT } from './dailyChallenge';
+import { playSound } from './gameAudio';
+import { triggerRewardHaptic, triggerLevelUpHaptic } from './gameHaptics';
 
 interface Props {
   visible:  boolean;
@@ -26,11 +28,22 @@ export function DailyChallengeResultsModal({ visible, score, answers, currentDai
         speed:           8,
         bounciness:      6,
       }).start();
+      playSound('levelUp');
+      triggerLevelUpHaptic();
     }
   }, [visible]);
 
   const cardScale   = cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
   const cardOpacity = cardAnim;
+
+  // Badge unlock sound fires when badge label changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (visible && newBadgeLabel) {
+      playSound('badgeUnlock');
+      triggerRewardHaptic();
+    }
+  }, [visible, newBadgeLabel]);
 
   const correctCount = answers.filter(a => a.isCorrect).length;
   const winCount     = answers.filter(a => a.heroWins).length;

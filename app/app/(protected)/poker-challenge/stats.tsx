@@ -7,6 +7,7 @@ import { StatsCard } from '../../../src/components/poker-challenge/StatsCard';
 import { StatsBar } from '../../../src/components/poker-challenge/StatsBar';
 import { StatsSection } from '../../../src/components/poker-challenge/StatsSection';
 import { AdStatsPanel } from '../../../src/components/poker-challenge/AdStatsPanel';
+import { GameFeedbackSettings } from '../../../src/components/poker-challenge/GameFeedbackSettings';
 
 function buildInsights(stats: {
   totalHandsPlayed: number;
@@ -171,6 +172,11 @@ export default function StatsPage() {
             {/* Ad Performance */}
             <StatsSection title="Ad Performance">
               <AdStatsPanel />
+            </StatsSection>
+
+            {/* Feedback Settings */}
+            <StatsSection title="Settings">
+              <GameFeedbackSettings />
             </StatsSection>
 
           </View>

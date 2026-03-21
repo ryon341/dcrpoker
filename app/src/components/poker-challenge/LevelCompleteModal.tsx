@@ -1,6 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
+import { playSound } from './gameAudio';
+import { triggerLevelUpHaptic } from './gameHaptics';
 
 interface Props {
   visible:          boolean;
@@ -25,6 +27,8 @@ export function LevelCompleteModal({ visible, level, score, nextThreshold, curre
         speed:           8,
         bounciness:      6,
       }).start();
+      playSound('levelUp');
+      triggerLevelUpHaptic();
     }
   }, [visible]);
 

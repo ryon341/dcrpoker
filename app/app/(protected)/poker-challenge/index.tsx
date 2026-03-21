@@ -26,6 +26,8 @@ import { AdBreakModal }       from '../../../src/components/poker-challenge/AdBr
 import { canShowAd, markAdShown } from '../../../src/components/poker-challenge/adBreakStorage';
 import { getAuthReturnTarget, clearAuthReturnTarget } from '../../../src/components/poker-challenge/authReturn';
 import { PostAuthResumeBanner } from '../../../src/components/poker-challenge/PostAuthResumeBanner';
+import { playSound } from '../../../src/components/poker-challenge/gameAudio';
+import { triggerTapHaptic, triggerCorrectHaptic, triggerIncorrectHaptic } from '../../../src/components/poker-challenge/gameHaptics';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
 import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
@@ -165,7 +167,7 @@ export default function PokerChallengePage() {
   const canContinue      = revealPhase >= 10;
 
   // â”€â”€ Reveal sequence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function scheduleReveal(delta: number) {
+  function scheduleReveal(delta: number, isCorrect: boolean, heroWins: boolean) {
     const phases: [number, number][] = [
       [TIMING.correctness,    2],
       [TIMING.explanation,    3],
@@ -179,6 +181,16 @@ export default function PokerChallengePage() {
     phases.forEach(([delay, phase]) => {
       timerRefs.current.push(setTimeout(() => {
         setRevealPhase(phase);
+        if (phase === 2) {
+          if (isCorrect) { playSound('correct'); triggerCorrectHaptic(); }
+          else           { playSound('incorrect'); triggerIncorrectHaptic(); }
+        }
+        if (phase === 4 || phase === 5 || phase === 6 || phase === 7) {
+          playSound('cardFlip');
+        }
+        if (phase === 10) {
+          playSound(heroWins ? 'win' : 'lose');
+        }
         if (phase === 9) setDeltaPop({ value: delta, show: true });
       }, delay));
     });
@@ -202,6 +214,8 @@ export default function PokerChallengePage() {
 
   function handleAnswer(answer: 'yes' | 'no') {
     if (revealPhase > 0) return;
+    playSound('tap');
+    triggerTapHaptic();
     const isCorrect = answer === challenge.correctAnswer;
     const delta     = getScoreDelta(isCorrect, challenge.heroWins);
     const newScore  = applyScore(gs.score, delta);
@@ -216,12 +230,14 @@ export default function PokerChallengePage() {
     setGs(next);
     setRevealPhase(1);
     cancelTimers();
-    scheduleReveal(delta);
+    scheduleReveal(delta, isCorrect, challenge.heroWins);
     saveProgress(snap(next));
   }
 
   function handleContinue() {
     if (!canContinue) return;
+    playSound('tap');
+    triggerTapHaptic();
     cancelTimers();
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });

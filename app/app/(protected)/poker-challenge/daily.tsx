@@ -28,6 +28,8 @@ import { loadDailyMeta, saveDailyMeta } from '../../../src/components/poker-chal
 import { applyDailyCompletion, getInitialDailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
 import type { DailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
 import type { Challenge } from '../../../src/components/poker-challenge/challengeTypes';
+import { playSound } from '../../../src/components/poker-challenge/gameAudio';
+import { triggerTapHaptic, triggerCorrectHaptic, triggerIncorrectHaptic } from '../../../src/components/poker-challenge/gameHaptics';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -154,7 +156,7 @@ export default function DailyChallengePage() {
   const canContinue      = revealPhase >= 10;
 
   // ── Reveal sequence ─────────────────────────────────────────────────────────
-  function scheduleReveal(delta: number) {
+  function scheduleReveal(delta: number, isCorrect: boolean, heroWins: boolean) {
     const phases: [number, number][] = [
       [TIMING.correctness,    2],
       [TIMING.explanation,    3],
@@ -168,6 +170,16 @@ export default function DailyChallengePage() {
     phases.forEach(([delay, phase]) => {
       timerRefs.current.push(setTimeout(() => {
         setRevealPhase(phase);
+        if (phase === 2) {
+          if (isCorrect) { playSound('correct'); triggerCorrectHaptic(); }
+          else           { playSound('incorrect'); triggerIncorrectHaptic(); }
+        }
+        if (phase === 4 || phase === 5 || phase === 6 || phase === 7) {
+          playSound('cardFlip');
+        }
+        if (phase === 10) {
+          playSound(heroWins ? 'win' : 'lose');
+        }
         if (phase === 9) setDeltaPop({ value: delta, show: true });
       }, delay));
     });
@@ -192,6 +204,8 @@ export default function DailyChallengePage() {
 
   function handleAnswer(answer: 'yes' | 'no') {
     if (revealPhase > 0 || ds.completed) return;
+    playSound('tap');
+    triggerTapHaptic();
     const isCorrect = answer === challenge.correctAnswer;
     const delta     = getScoreDelta(isCorrect, challenge.heroWins);
     const newScore  = applyScore(ds.score, delta);
@@ -207,11 +221,13 @@ export default function DailyChallengePage() {
     setDs(next);
     setRevealPhase(1);
     cancelTimers();
-    scheduleReveal(delta);
+    scheduleReveal(delta, isCorrect, challenge.heroWins);
   }
 
   function handleContinue() {
     if (!canContinue) return;
+    playSound('tap');
+    triggerTapHaptic();
     cancelTimers();
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });
