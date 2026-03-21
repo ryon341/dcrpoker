@@ -1,17 +1,27 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { Animated, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
 interface Props {
   scoreDelta: number;
-  heroWins: boolean;
+  heroWins:   boolean;
   onContinue: () => void;
 }
 
 export function ContinuePanel({ scoreDelta, heroWins, onContinue }: Props) {
+  const fadeAnim      = useRef(new Animated.Value(0)).current;
+  const slideAnim     = useRef(new Animated.Value(12)).current;
   const deltaPositive = scoreDelta >= 0;
 
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   return (
-    <View style={s.outer}>
+    <Animated.View style={[s.outer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Hand outcome */}
       <View style={[s.outcome, heroWins ? s.outcomeWin : s.outcomeLose]}>
         <Text style={[s.outcomeText, heroWins ? s.outcomeWinText : s.outcomeLoseText]}>
@@ -31,7 +41,7 @@ export function ContinuePanel({ scoreDelta, heroWins, onContinue }: Props) {
       <TouchableOpacity style={s.btn} onPress={onContinue} activeOpacity={0.8}>
         <Text style={s.btnText}>Continue →</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 

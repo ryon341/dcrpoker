@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { View, Text, Animated, StyleSheet } from 'react-native';
 import { PlayingCard } from './PlayingCard';
 import { T } from '../ui/Theme';
 
@@ -7,29 +8,56 @@ interface Props {
   villainHand: [string, string];
   villainRevealed: boolean;
   runout?: [string, string, string, string, string];
-  showRunout?: boolean;
+  showRunout?: boolean; // legacy: show all 5 at once
+  showFlop?: boolean;
+  showTurn?: boolean;
+  showRiver?: boolean;
 }
 
-export function HandDisplay({ heroHand, villainHand, villainRevealed, runout, showRunout }: Props) {
+export function HandDisplay({
+  heroHand,
+  villainHand,
+  villainRevealed,
+  runout,
+  showRunout,
+  showFlop,
+  showTurn,
+  showRiver,
+}: Props) {
+  const villainAnim = useRef(new Animated.Value(villainRevealed ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(villainAnim, {
+      toValue:         villainRevealed ? 1 : 0,
+      duration:        320,
+      useNativeDriver: true,
+    }).start();
+  }, [villainRevealed]);
+
+  // Number of board cards to show
+  const boardCount = showRunout ? 5 : showRiver ? 5 : showTurn ? 4 : showFlop ? 3 : 0;
+  const boardVisible = boardCount > 0 && !!runout;
+  const visibleCards = boardVisible ? runout!.slice(0, boardCount) : [];
+
   return (
     <View style={s.outer}>
       {/* Villain */}
       <View style={s.side}>
         <Text style={s.label}>Villain</Text>
-        <View style={s.cards}>
+        <Animated.View style={[s.cards, { opacity: villainRevealed ? villainAnim : 1 }]}>
           {villainRevealed
             ? villainHand.map((c, i) => <PlayingCard key={i} card={c} />)
             : [0, 1].map(i => <PlayingCard key={i} card="??" hidden />)
           }
-        </View>
+        </Animated.View>
       </View>
 
-      {/* Board runout (5 cards) */}
-      {showRunout && runout && (
+      {/* Board runout — staged */}
+      {boardVisible && (
         <View style={s.board}>
           <Text style={s.boardLabel}>Board</Text>
           <View style={s.boardCards}>
-            {runout.map((c, i) => <PlayingCard key={i} card={c} size="sm" />)}
+            {visibleCards.map((c, i) => <PlayingCard key={i} card={c} size="sm" />)}
           </View>
         </View>
       )}

@@ -1,50 +1,97 @@
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
 interface Props {
-  visible: boolean;
-  level: number;
-  onAdvance: () => void;
+  visible:       boolean;
+  level:         number;
+  score:         number;
+  nextThreshold: number;
+  onAdvance:     () => void;
 }
 
-export function LevelCompleteModal({ visible, level, onAdvance }: Props) {
+export function LevelCompleteModal({ visible, level, score, nextThreshold, onAdvance }: Props) {
+  const cardAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      cardAnim.setValue(0);
+      Animated.spring(cardAnim, {
+        toValue:         1,
+        useNativeDriver: true,
+        speed:           8,
+        bounciness:      6,
+      }).start();
+    }
+  }, [visible]);
+
+  const cardScale   = cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
+  const cardOpacity = cardAnim;
+
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
       <View style={s.backdrop}>
-        <View style={s.card}>
-          {/* Glow decoration */}
+        <Animated.View style={[s.card, { opacity: cardOpacity, transform: [{ scale: cardScale }] }]}>
+          {/* Gold glow decoration */}
           <View style={s.glow} pointerEvents="none" />
 
-          <Text style={s.badge}>LEVEL {level}</Text>
-          <Text style={s.title}>Complete! 🏆</Text>
+          <View style={s.trophyRow}>
+            <Text style={s.trophyIcon}>🏆</Text>
+          </View>
+
+          <Text style={s.badgePill}>LEVEL {level} COMPLETE</Text>
+          <Text style={s.title}>Well played!</Text>
           <Text style={s.sub}>
-            You've mastered Level {level}. Your score carries forward.
+            Your score carries forward into Level {level + 1}.
           </Text>
+
+          {/* Score summary */}
+          <View style={s.scoreRow}>
+            <View style={s.scoreBox}>
+              <Text style={s.scoreBoxLabel}>Your Score</Text>
+              <Text style={s.scoreBoxValue}>{score}</Text>
+            </View>
+            <View style={s.scoreArrow}>
+              <Text style={s.arrowText}>→</Text>
+            </View>
+            <View style={s.scoreBox}>
+              <Text style={s.scoreBoxLabel}>Next Goal</Text>
+              <Text style={s.scoreBoxValue}>{nextThreshold}</Text>
+            </View>
+          </View>
 
           <View style={s.divider} />
 
-          <Text style={s.nextLabel}>Next up</Text>
-          <Text style={s.next}>Level {level + 1}</Text>
+          <Text style={s.nextLabel}>Advancing to</Text>
+          <Text style={s.nextLevel}>Level {level + 1}</Text>
 
           <TouchableOpacity style={s.btn} onPress={onAdvance} activeOpacity={0.8}>
             <Text style={s.btnText}>Advance to Level {level + 1} →</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 const s = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: 28 },
-  card:     { width: '100%', maxWidth: 380, backgroundColor: '#100e0c', borderRadius: 24, borderWidth: 2, borderColor: T.gold, padding: 32, alignItems: 'center', gap: 12, overflow: 'hidden' },
-  glow:     { position: 'absolute', top: -60, left: -60, right: -60, height: 200, backgroundColor: 'rgba(251,191,36,0.07)', borderRadius: 300 },
-  badge:    { color: T.gold, fontSize: 11, fontWeight: '700', letterSpacing: 2.5, backgroundColor: 'rgba(251,191,36,0.12)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 100 },
-  title:    { color: T.white, fontSize: 32, fontWeight: 'bold', marginTop: 4 },
-  sub:      { color: T.muted, fontSize: 14, textAlign: 'center', lineHeight: 22 },
-  divider:  { height: 1, backgroundColor: T.border, alignSelf: 'stretch' },
-  nextLabel:{ color: T.muted, fontSize: 12, letterSpacing: 1 },
-  next:     { color: T.gold, fontSize: 22, fontWeight: 'bold' },
-  btn:      { backgroundColor: T.gold, paddingHorizontal: 32, paddingVertical: 15, borderRadius: 24, marginTop: 8, alignSelf: 'stretch', alignItems: 'center' },
-  btnText:  { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },
+  backdrop:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center', padding: 28 },
+  card:           { width: '100%', maxWidth: 380, backgroundColor: '#100e0c', borderRadius: 24, borderWidth: 2, borderColor: T.gold, padding: 28, alignItems: 'center', gap: 10, overflow: 'hidden' },
+  glow:           { position: 'absolute', top: -80, left: -80, right: -80, height: 240, backgroundColor: 'rgba(251,191,36,0.06)', borderRadius: 400 },
+  trophyRow:      { marginBottom: 4 },
+  trophyIcon:     { fontSize: 48 },
+  badgePill:      { color: T.gold, fontSize: 10, fontWeight: '700', letterSpacing: 2.5, backgroundColor: 'rgba(251,191,36,0.12)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 100 },
+  title:          { color: T.white, fontSize: 26, fontWeight: 'bold', marginTop: 2 },
+  sub:            { color: T.muted, fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  scoreRow:       { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  scoreBox:       { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  scoreBoxLabel:  { color: T.muted, fontSize: 11, fontWeight: '600', letterSpacing: 0.8, marginBottom: 2 },
+  scoreBoxValue:  { color: T.gold, fontSize: 24, fontWeight: 'bold' },
+  scoreArrow:     { alignItems: 'center', justifyContent: 'center' },
+  arrowText:      { color: T.muted, fontSize: 20 },
+  divider:        { height: 1, backgroundColor: T.border, alignSelf: 'stretch', marginVertical: 4 },
+  nextLabel:      { color: T.muted, fontSize: 12, letterSpacing: 1 },
+  nextLevel:      { color: T.gold, fontSize: 22, fontWeight: 'bold' },
+  btn:            { backgroundColor: T.gold, paddingHorizontal: 32, paddingVertical: 15, borderRadius: 24, marginTop: 6, alignSelf: 'stretch', alignItems: 'center' },
+  btnText:        { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },
 });
