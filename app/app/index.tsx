@@ -5,10 +5,11 @@ import { T } from '../src/components/ui/Theme';
 
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 const NAV_LINKS: [string, string, string][] = [
-  ['🎮', 'Arcade',   '/(protected)/arcade'],
-  ['🔧', 'Tools',    '/(protected)/tools'],
-  ['📊', 'Training', '/(protected)/tools/training'],
-  ['🛒', 'Gear',     '/(protected)/gear'],
+  ['�', 'Challenge', '/(protected)/poker-challenge'],
+  ['🎮', 'Arcade',    '/(protected)/arcade'],
+  ['🔧', 'Tools',     '/(protected)/tools'],
+  ['📊', 'Training',  '/(protected)/tools/training'],
+  ['🛒', 'Gear',      '/(protected)/gear'],
 ];
 
 function NavBar({ wide }: { wide: boolean }) {
@@ -246,6 +247,43 @@ function TrainingBooks({ wide }: { wide: boolean }) {
   );
 }
 
+// ─── Poker Challenge Section ────────────────────────────────────────────────
+function PokerChallengeSection({ wide }: { wide: boolean }) {
+  const router = useRouter();
+  return (
+    <View style={[sec.outer, { backgroundColor: '#0a0d14' }]}>
+      <View style={sec.inner}>
+        <View style={wide ? { flexDirection: 'row', alignItems: 'center', gap: 40 } : { gap: 20 }}>
+          <View style={wide ? { flex: 1 } : {}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Text style={{ fontSize: 28 }}>🎯</Text>
+              <View style={{ backgroundColor: T.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                <Text style={{ color: '#0c0a09', fontSize: 10, fontWeight: '800', letterSpacing: 1.5 }}>FREE TO PLAY</Text>
+              </View>
+            </View>
+            <Text style={[sec.heading, { textAlign: 'left' }]}>Daily Poker Challenge</Text>
+            <Text style={[sec.subheading, { textAlign: 'left' }]}>Test your decision-making with real hand scenarios. Answer correctly, earn points, and climb the leaderboard — no account needed to start.</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+              {['🃏 Real hand scenarios', '⚡ Instant feedback', '🏆 Level system', '📈 Track your progress'].map(f => (
+                <View key={f} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={{ color: T.muted, fontSize: 13 }}>{f}</Text>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={{ backgroundColor: T.gold, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28, alignSelf: 'flex-start', marginTop: 20 }}
+              onPress={() => router.push('/(protected)/poker-challenge')}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#0c0a09', fontWeight: '800', fontSize: 15 }}>Play Today's Challenge →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Arcade Preview ───────────────────────────────────────────────────────────
 const ARCADE_GAMES = [
   { icon: '🧮', title: 'Outs Counter', body: 'Quiz yourself on counting outs fast.' },
@@ -353,7 +391,7 @@ function Footer({ wide }: { wide: boolean }) {
     { heading: 'App', links: [['My Games', '/(protected)/games'], ['Players', '/(protected)/players'], ['Bankroll', '/(protected)/bankroll'], ['Notifications', '/(protected)/notifications']] },
     { heading: 'Tools', links: [['Chip Calculator', '/(protected)/tools/chip-calculator'], ['Preflop Charts', '/(protected)/tools/preflop-charts'], ['Odds Calculator', '/(protected)/tools/odds-calculator'], ['Training', '/(protected)/tools/training']] },
     { heading: 'Account', links: [['Sign In', '/(auth)/login'], ['Billing & Plan', '/(protected)/account/billing'], ['Referrals', '/(protected)/account/referrals']] },
-    { heading: 'Explore', links: [['Arcade', '/(protected)/arcade'], ['Gear', '/(protected)/gear'], ['Tools', '/(protected)/tools']] },
+    { heading: 'Explore', links: [['Daily Challenge', '/(protected)/poker-challenge'], ['Arcade', '/(protected)/arcade'], ['Gear', '/(protected)/gear'], ['Tools', '/(protected)/tools']] },
   ];
   return (
     <View style={foot.outer}>
@@ -398,6 +436,7 @@ export default function LandingPage() {
       <Features wide={wide} />
       <HowItWorks wide={wide} />
       <ToolsPreview wide={wide} />
+      <PokerChallengeSection wide={wide} />
       <ArcadePreview wide={wide} />
       <TrainingBooks wide={wide} />
       <Gear wide={wide} />
