@@ -14,9 +14,10 @@ import { ScoreDeltaPop }        from '../../../src/components/poker-challenge/Sc
 import { WheelModal }           from '../../../src/components/poker-challenge/WheelModal';
 import { LevelCompleteModal }   from '../../../src/components/poker-challenge/LevelCompleteModal';
 import { LoginGateModal }       from '../../../src/components/poker-challenge/LoginGateModal';
-import { MOCK_CHALLENGES }      from '../../../src/components/poker-challenge/mockChallenges';
+import { getNextChallenge }     from '../../../src/components/poker-challenge/challengeSelector';
 import { getScoreDelta, applyScore, getPointsRequired } from '../../../src/components/poker-challenge/scoring';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
+import type { Challenge }       from '../../../src/components/poker-challenge/challengeTypes';
 
 const SCORE_TABLE     = { correctWin: 13, correctLose: 7, incorrectWin: -5, incorrectLose: -10 };
 const MAX_GUEST_LEVEL = 5;
@@ -25,7 +26,8 @@ interface GameState {
   level: number;
   score: number;
   handsCompleted: number;
-  challengeIndex: number;
+  currentChallenge: Challenge;
+  challengeHistory: string[];
   selectedAnswer: 'yes' | 'no' | null;
   lastScoreDelta: number;
   lastResultType: 'correct' | 'incorrect' | null;
@@ -34,22 +36,25 @@ interface GameState {
   loginRequiredForNextLevel: boolean;
 }
 
-const INITIAL_STATE: GameState = {
-  level: 1,
-  score: 0,
-  handsCompleted: 0,
-  challengeIndex: 0,
-  selectedAnswer: null,
-  lastScoreDelta: 0,
-  lastResultType: null,
-  wheelPending: false,
-  levelComplete: false,
-  loginRequiredForNextLevel: false,
-};
+function makeInitialState(): GameState {
+  return {
+    level: 1,
+    score: 0,
+    handsCompleted: 0,
+    currentChallenge: getNextChallenge({ level: 1, history: [] }),
+    challengeHistory: [],
+    selectedAnswer: null,
+    lastScoreDelta: 0,
+    lastResultType: null,
+    wheelPending: false,
+    levelComplete: false,
+    loginRequiredForNextLevel: false,
+  };
+}
 
 export default function PokerChallengePage() {
   const { isGuest, progressLoaded, savedProgress, saveProgress, resetProgress } = usePokerProgress();
-  const [gs, setGs] = useState<GameState>(INITIAL_STATE);
+  const [gs, setGs] = useState<GameState>(makeInitialState);
 
   // â”€â”€ Staged reveal state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // 0=idle, 2=correctness, 3=explanation, 4=villain, 5=flop, 6=turn,
@@ -75,16 +80,17 @@ export default function PokerChallengePage() {
     setGs(prev => ({
       ...prev,
       level,
-      score:          savedProgress.score,
-      handsCompleted: savedProgress.handsCompleted,
-      challengeIndex: savedProgress.currentChallengeIndex,
-      wheelPending:   savedProgress.wheelPending,
+      score:            savedProgress.score,
+      handsCompleted:   savedProgress.handsCompleted,
+      currentChallenge: getNextChallenge({ level, history: [] }),
+      challengeHistory: [],
+      wheelPending:     savedProgress.wheelPending,
     }));
     setRevealPhase(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressLoaded]);
 
-  const challenge      = MOCK_CHALLENGES[gs.challengeIndex % MOCK_CHALLENGES.length];
+  const challenge = gs.currentChallenge;
   const pointsRequired = getPointsRequired(gs.level);
   const showGuestPromo = isGuest && gs.level >= 4;
 
@@ -123,7 +129,7 @@ export default function PokerChallengePage() {
       level:                 state.level,
       score:                 state.score,
       handsCompleted:        state.handsCompleted,
-      currentChallengeIndex: state.challengeIndex,
+      currentChallengeIndex: 0,
       wheelPending:          state.wheelPending,
       lastWheelResult:       null,
       updatedAt:             new Date().toISOString(),
@@ -159,10 +165,12 @@ export default function PokerChallengePage() {
     const newHands = gs.handsCompleted + 1;
     const wheel    = newHands > 0 && newHands % 15 === 0;
     const lvlDone  = gs.score >= getPointsRequired(gs.level);
+    const newHistory = [...gs.challengeHistory.slice(-15), gs.currentChallenge.id];
     const next: GameState = {
       ...gs,
-      handsCompleted: newHands,
-      challengeIndex: gs.challengeIndex + 1,
+      handsCompleted:   newHands,
+      currentChallenge: getNextChallenge({ level: gs.level, history: newHistory }),
+      challengeHistory: newHistory,
       selectedAnswer: null,
       lastScoreDelta: 0,
       lastResultType: null,
@@ -188,7 +196,15 @@ export default function PokerChallengePage() {
       setGs(prev => ({ ...prev, levelComplete: false, loginRequiredForNextLevel: true }));
       return;
     }
-    const next: GameState = { ...gs, level: nextLevel, levelComplete: false, loginRequiredForNextLevel: false };
+    const newHistory: string[] = [];
+    const next: GameState = {
+      ...gs,
+      level: nextLevel,
+      levelComplete: false,
+      loginRequiredForNextLevel: false,
+      currentChallenge: getNextChallenge({ level: nextLevel, history: newHistory }),
+      challengeHistory: newHistory,
+    };
     setGs(next);
     saveProgress(snap(next));
   }
@@ -198,7 +214,7 @@ export default function PokerChallengePage() {
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });
     await resetProgress();
-    setGs({ ...INITIAL_STATE });
+    setGs(makeInitialState());
   }
 
   return (
