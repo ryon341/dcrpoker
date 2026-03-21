@@ -8,10 +8,13 @@ interface Props {
   visible:  boolean;
   score:    number;
   answers:  DailyChallengeAnswer[];
+  currentDailyStreak?: number;
+  bestDailyStreak?:    number;
+  newBadgeLabel?:      string | null;
   onClose:  () => void;
 }
 
-export function DailyChallengeResultsModal({ visible, score, answers, onClose }: Props) {
+export function DailyChallengeResultsModal({ visible, score, answers, currentDailyStreak, bestDailyStreak, newBadgeLabel, onClose }: Props) {
   const cardAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -56,6 +59,28 @@ export function DailyChallengeResultsModal({ visible, score, answers, onClose }:
 
           <View style={s.divider} />
 
+          {/* Daily streak section */}
+          {(currentDailyStreak ?? 0) > 0 && (
+            <View style={s.streakBlock}>
+              <View style={s.streakRow}>
+                <Text style={s.streakFlame}>🔥</Text>
+                <Text style={s.streakLabel}>
+                  Daily Streak: <Text style={s.streakNum}>{currentDailyStreak}</Text>
+                </Text>
+                {(bestDailyStreak ?? 0) > 0 && (
+                  <Text style={s.bestStreak}> · Best: {bestDailyStreak}</Text>
+                )}
+              </View>
+
+              {newBadgeLabel && (
+                <View style={s.badgeUnlock}>
+                  <Text style={s.badgeUnlockTitle}>🏅 New Badge Unlocked</Text>
+                  <Text style={s.badgeUnlockLabel}>{newBadgeLabel}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           <Text style={s.comeback}>Come back tomorrow for a new challenge</Text>
 
           <TouchableOpacity style={s.btn} onPress={onClose} activeOpacity={0.8}>
@@ -88,6 +113,15 @@ const s = StyleSheet.create({
   scoreValue: { color: T.gold, fontSize: 36, fontWeight: 'bold' },
   statRow:    { flexDirection: 'row', gap: 12 },
   divider:    { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', alignSelf: 'stretch', marginVertical: 4 },
+  streakBlock: { alignSelf: 'stretch', gap: 8 },
+  streakRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  streakFlame: { fontSize: 16 },
+  streakLabel: { color: T.muted, fontSize: 13, fontWeight: '600' },
+  streakNum:   { color: T.gold, fontWeight: '800' },
+  bestStreak:  { color: T.muted, fontSize: 12 },
+  badgeUnlock: { alignItems: 'center', backgroundColor: 'rgba(251,191,36,0.10)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.30)', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16, gap: 2 },
+  badgeUnlockTitle: { color: T.gold, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' },
+  badgeUnlockLabel: { color: T.white, fontSize: 16, fontWeight: '800' },
   comeback:   { color: T.muted, fontSize: 13, textAlign: 'center', lineHeight: 20 },
   btn:        { backgroundColor: T.gold, paddingHorizontal: 32, paddingVertical: 15, borderRadius: 24, marginTop: 6, alignSelf: 'stretch', alignItems: 'center' },
   btnText:    { color: '#0c0a09', fontWeight: 'bold', fontSize: 16 },

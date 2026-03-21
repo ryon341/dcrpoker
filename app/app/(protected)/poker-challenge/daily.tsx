@@ -24,6 +24,9 @@ import {
   DailyChallengeAnswer,
 } from '../../../src/components/poker-challenge/dailyStorage';
 import { pokerProgressApi } from '../../../src/api/pokerProgress';
+import { loadDailyMeta, saveDailyMeta } from '../../../src/components/poker-challenge/dailyMetaStorage';
+import { applyDailyCompletion, getInitialDailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
+import type { DailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
 import type { Challenge } from '../../../src/components/poker-challenge/challengeTypes';
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -88,6 +91,8 @@ export default function DailyChallengePage() {
   const [ds, setDs] = useState<DailyState>(() => buildState(todayId, null));
   const [loaded, setLoaded] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [dailyMeta, setDailyMeta]     = useState<DailyMeta>(getInitialDailyMeta);
+  const [newBadgeLabel, setNewBadgeLabel] = useState<string | null>(null);
 
   // Staged reveal state
   const [revealPhase, setRevealPhase] = useState(0);
@@ -125,6 +130,11 @@ export default function DailyChallengePage() {
       const state = buildState(todayId, saved);
       setDs(state);
       if (state.completed) setShowResults(true);
+
+      // Load daily meta (streak)
+      const meta = await loadDailyMeta(userId);
+      setDailyMeta(meta);
+
       setLoaded(true);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,7 +239,14 @@ export default function DailyChallengePage() {
     setDs(next);
     persist(next);
 
-    if (isCompleted) setShowResults(true);
+    if (isCompleted) {
+      // Update daily streak meta
+      const updatedMeta = applyDailyCompletion(dailyMeta, todayId);
+      setDailyMeta(updatedMeta);
+      setNewBadgeLabel(updatedMeta.newBadge?.label ?? null);
+      saveDailyMeta(updatedMeta, userId).catch(() => {});
+      setShowResults(true);
+    }
   }
 
   if (!loaded) {
@@ -270,6 +287,11 @@ export default function DailyChallengePage() {
             <Text style={s.dailyScore}>
               Daily Score: <Text style={s.dailyScoreVal}>{ds.score}</Text>
             </Text>
+            {dailyMeta.currentDailyStreak > 0 && (
+              <Text style={s.streakHud}>
+                🔥 Streak: <Text style={s.streakHudNum}>{dailyMeta.currentDailyStreak}</Text>
+              </Text>
+            )}
           </View>
 
           <View style={s.divider} />
@@ -362,6 +384,9 @@ export default function DailyChallengePage() {
         visible={showResults}
         score={ds.score}
         answers={ds.answers}
+        currentDailyStreak={dailyMeta.currentDailyStreak}
+        bestDailyStreak={dailyMeta.bestDailyStreak}
+        newBadgeLabel={newBadgeLabel}
         onClose={() => {
           setShowResults(false);
           router.back();
@@ -411,6 +436,8 @@ const s = StyleSheet.create({
   handPillText:     { color: T.gold, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   dailyScore:       { color: T.muted, fontSize: 14 },
   dailyScoreVal:    { color: T.white, fontWeight: 'bold' },
+  streakHud:        { color: T.muted, fontSize: 12, fontWeight: '600' },
+  streakHudNum:     { color: T.gold,  fontWeight: '800' },
   divider:          { height: 1, backgroundColor: 'rgba(255,255,255,0.07)', marginHorizontal: 16 },
   section:          { paddingHorizontal: 16, paddingVertical: 12 },
   sectionLabel:     { color: T.muted, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginBottom: 6, textTransform: 'uppercase' },

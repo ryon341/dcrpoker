@@ -8,6 +8,10 @@ import { loadDailyProgress } from './dailyStorage';
 import type { DailyChallengeProgress } from './dailyStorage';
 import { AdBreakModal } from './AdBreakModal';
 import { canShowAd, markAdShown } from './adBreakStorage';
+import { loadDailyMeta } from './dailyMetaStorage';
+import { DailyStreakBadge } from './DailyStreakBadge';
+import { isNextCalendarDay } from './dailyStreak';
+import type { DailyMeta } from './dailyStreak';
 
 type Status = 'loading' | 'not-started' | 'in-progress' | 'completed';
 
@@ -19,11 +23,16 @@ export function DailyChallengeCard() {
   const [status, setStatus] = useState<Status>('loading');
   const [saved, setSaved]   = useState<DailyChallengeProgress | null>(null);
   const [showAd, setShowAd] = useState(false);
+  const [dailyMeta, setDailyMeta] = useState<DailyMeta | null>(null);
   const todayId = getTodayDateString();
 
   useEffect(() => {
     (async () => {
-      const progress = await loadDailyProgress(userId);
+      const [progress, meta] = await Promise.all([
+        loadDailyProgress(userId),
+        loadDailyMeta(userId),
+      ]);
+      setDailyMeta(meta);
       if (!progress || progress.dailyId !== todayId) {
         setStatus('not-started');
         setSaved(null);
@@ -67,6 +76,31 @@ export function DailyChallengeCard() {
 
       <Text style={s.desc}>5 hands · same for everyone today</Text>
 
+      {/* Streak info */}
+      {dailyMeta && dailyMeta.currentDailyStreak > 0 && (
+        <View style={s.streakSection}>
+          <DailyStreakBadge
+            streak={dailyMeta.currentDailyStreak}
+            bestStreak={dailyMeta.bestDailyStreak}
+            badgeLabel={
+              dailyMeta.badgesUnlocked.length > 0
+                ? null  // shown in results modal; keep card compact
+                : null
+            }
+            compact
+          />
+          {status !== 'completed' && (
+            <Text style={s.streakMotivation}>
+              {isNextCalendarDay(dailyMeta.lastCompletedDailyId, todayId)
+                ? `Finish today's run to make it ${dailyMeta.currentDailyStreak + 1} days!`
+                : dailyMeta.lastCompletedDailyId === todayId
+                  ? 'Already completed today ✓'
+                  : 'Start a new streak today'}
+            </Text>
+          )}
+        </View>
+      )}
+
       {status !== 'loading' && (
         <TouchableOpacity
           style={[s.btn, done && s.btnOutline]}
@@ -105,6 +139,8 @@ const s = StyleSheet.create({
   badge:       { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
   badgeText:   { fontSize: 11, fontWeight: '700' },
   desc:        { color: T.muted, fontSize: 12 },
+  streakSection: { gap: 4 },
+  streakMotivation: { color: T.muted, fontSize: 11, fontStyle: 'italic' },
   btn:         { backgroundColor: T.gold, paddingVertical: 10, borderRadius: 20, alignItems: 'center' },
   btnOutline:  { backgroundColor: 'transparent', borderWidth: 1, borderColor: T.gold },
   btnText:     { color: '#0c0a09', fontWeight: 'bold', fontSize: 13 },
