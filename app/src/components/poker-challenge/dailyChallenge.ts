@@ -1,15 +1,11 @@
-// ─── Daily Challenge — seeded deterministic hand selection (TC057) ────────────
+// ─── Daily Challenge — seeded deterministic tier selection (TC071) ────────────
 
-import type { Challenge } from './challengeTypes';
-import {
-  BEGINNER_POOL,
-  EASY_POOL,
-  INTERMEDIATE_POOL,
-  ADVANCED_POOL,
-  EXPERT_POOL,
-} from './challengePools';
+import type { ChallengeQuestion, ChallengeTier } from './challengeQuestionTypes';
+import { getQuestionsForTier } from './data/tierQuestionBanks';
 
 export const DAILY_HAND_COUNT = 5;
+
+const DAILY_TIERS: ChallengeTier[] = ['beginner', 'apprentice', 'grinder', 'chip_leader', 'master'];
 
 /** Returns today's date string as YYYY-MM-DD in local time. */
 export function getTodayDateString(): string {
@@ -56,17 +52,14 @@ export function seededShuffle<T>(items: T[], seed: string): T[] {
 }
 
 /**
- * Returns exactly 5 challenges for a given date string:
- * 1 from each difficulty tier (beginner, easy, intermediate, advanced, expert).
- * The selection is fully deterministic — same date always yields same 5 hands.
+ * Returns exactly 5 questions for a given date string:
+ * 1 from each canonical tier (beginner, apprentice, grinder, chip_leader, master).
+ * The selection is fully deterministic — same date always yields same 5 questions.
  */
-export function getDailyChallengeSet(dateString: string): Challenge[] {
-  const tiers = [
-    { pool: BEGINNER_POOL,     tierSeed: `${dateString}-b` },
-    { pool: EASY_POOL,         tierSeed: `${dateString}-e` },
-    { pool: INTERMEDIATE_POOL, tierSeed: `${dateString}-i` },
-    { pool: ADVANCED_POOL,     tierSeed: `${dateString}-a` },
-    { pool: EXPERT_POOL,       tierSeed: `${dateString}-x` },
-  ];
-  return tiers.map(({ pool, tierSeed }) => seededShuffle(pool, tierSeed)[0]);
+export function getDailyChallengeSet(dateString: string): ChallengeQuestion[] {
+  return DAILY_TIERS.map((tier, idx) => {
+    const pool = getQuestionsForTier(tier);
+    const tierSeed = `${dateString}-t${idx + 1}`;
+    return seededShuffle(pool, tierSeed)[0];
+  });
 }

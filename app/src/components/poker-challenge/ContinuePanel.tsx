@@ -7,9 +7,10 @@ interface Props {
   heroWins:   boolean;
   streak:     number;
   onContinue: () => void;
+  showHandOutcome?: boolean;
 }
 
-export function ContinuePanel({ scoreDelta, heroWins, streak, onContinue }: Props) {
+export function ContinuePanel({ scoreDelta, heroWins, streak, onContinue, showHandOutcome = true }: Props) {
   const fadeAnim      = useRef(new Animated.Value(0)).current;
   const slideAnim     = useRef(new Animated.Value(12)).current;
   const deltaPositive = scoreDelta >= 0;
@@ -26,7 +27,9 @@ export function ContinuePanel({ scoreDelta, heroWins, streak, onContinue }: Prop
       {/* Hand outcome */}
       <View style={[s.outcome, heroWins ? s.outcomeWin : s.outcomeLose]}>
         <Text style={[s.outcomeText, heroWins ? s.outcomeWinText : s.outcomeLoseText]}>
-          {heroWins ? '🏆 You Win the Hand' : '💀 You Lose the Hand'}
+          {showHandOutcome
+            ? (heroWins ? '🏆 You Win the Hand' : '💀 You Lose the Hand')
+            : (scoreDelta >= 0 ? '✅ Correct Answer' : '❌ Incorrect Answer')}
         </Text>
       </View>
 

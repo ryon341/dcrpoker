@@ -27,7 +27,11 @@ import { pokerProgressApi } from '../../../src/api/pokerProgress';
 import { loadDailyMeta, saveDailyMeta } from '../../../src/components/poker-challenge/dailyMetaStorage';
 import { applyDailyCompletion, getInitialDailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
 import type { DailyMeta } from '../../../src/components/poker-challenge/dailyStreak';
-import type { Challenge } from '../../../src/components/poker-challenge/challengeTypes';
+import {
+  adaptQuestionToRuntime,
+  isRuntimeAnswerCorrect,
+  type RuntimeChallenge,
+} from '../../../src/components/poker-challenge/challengeQuestionAdapter';
 import { playSound } from '../../../src/components/poker-challenge/gameAudio';
 import { triggerTapHaptic, triggerCorrectHaptic, triggerIncorrectHaptic } from '../../../src/components/poker-challenge/gameHaptics';
 
@@ -35,13 +39,13 @@ import { triggerTapHaptic, triggerCorrectHaptic, triggerIncorrectHaptic } from '
 
 interface DailyState {
   dailyId:         string;
-  challenges:      Challenge[];
+  challenges:      RuntimeChallenge[];
   currentIndex:    number;       // 0–4: which hand we are ON right now
   score:           number;
   answers:         DailyChallengeAnswer[];
   completed:       boolean;
   // per-hand transient
-  selectedAnswer:  'yes' | 'no' | null;
+  selectedAnswer:  string | null;
   lastScoreDelta:  number;
   lastResultType:  'correct' | 'incorrect' | null;
   currentStreak:   number;       // within this run, for display only
@@ -51,7 +55,7 @@ function buildState(
   todayId: string,
   saved: DailyChallengeProgress | null,
 ): DailyState {
-  const challenges = getDailyChallengeSet(todayId);
+  const challenges = getDailyChallengeSet(todayId).map(adaptQuestionToRuntime);
   if (saved && saved.dailyId === todayId) {
     // Resume or show completed
     const streak = saved.answers.reduce((acc, a) => a.isCorrect ? acc + 1 : 0, 0);
@@ -202,12 +206,13 @@ export default function DailyChallengePage() {
     }
   }
 
-  function handleAnswer(answer: 'yes' | 'no') {
+  function handleAnswer(answer: string) {
     if (revealPhase > 0 || ds.completed) return;
     playSound('tap');
     triggerTapHaptic();
-    const isCorrect = answer === challenge.correctAnswer;
-    const delta     = getScoreDelta(isCorrect, challenge.heroWins);
+    const isCorrect = isRuntimeAnswerCorrect(challenge, answer);
+    const handOutcomeForUi = challenge.category === 'action' ? challenge.heroWins : isCorrect;
+    const delta     = getScoreDelta(isCorrect, challenge.heroWins, challenge.category, answer);
     const newScore  = applyScore(ds.score, delta);
     const newStreak = isCorrect ? ds.currentStreak + 1 : 0;
     const next: DailyState = {
@@ -221,7 +226,7 @@ export default function DailyChallengePage() {
     setDs(next);
     setRevealPhase(1);
     cancelTimers();
-    scheduleReveal(delta, isCorrect, challenge.heroWins);
+    scheduleReveal(delta, isCorrect, handOutcomeForUi);
   }
 
   function handleContinue() {
@@ -236,7 +241,7 @@ export default function DailyChallengePage() {
       challengeId:    challenge.id,
       selectedAnswer: ds.selectedAnswer!,
       isCorrect:      ds.lastResultType === 'correct',
-      heroWins:       challenge.heroWins,
+      heroWins:       challenge.category === 'action' ? challenge.heroWins : ds.lastResultType === 'correct',
       delta:          ds.lastScoreDelta,
     };
     const newAnswers  = [...ds.answers, newAnswer];
@@ -318,35 +323,42 @@ export default function DailyChallengePage() {
               <View style={s.section}>
                 <Text style={s.sectionLabel}>Hand {handNumber} of {DAILY_HAND_COUNT}</Text>
                 <QuestionPanel
-                  question={challenge.question}
+                  scenario={challenge.scenario}
                   explanation={challenge.explanation}
                   showExplanation={showExplanation}
                 />
               </View>
 
-              <HandDisplay
-                heroHand={challenge.heroHand}
-                villainHand={challenge.villainHand}
-                villainRevealed={showVillainCards}
-                runout={challenge.runout}
-                showFlop={showFlop}
-                showTurn={showTurn}
-                showRiver={showRiver}
-              />
+              {challenge.heroHand && challenge.villainHand && challenge.runout ? (
+                <HandDisplay
+                  heroHand={challenge.heroHand}
+                  villainHand={challenge.villainHand}
+                  villainRevealed={showVillainCards}
+                  runout={challenge.runout}
+                  showFlop={showFlop}
+                  showTurn={showTurn}
+                  showRiver={showRiver}
+                />
+              ) : (
+                <View style={s.noCardsWrap}>
+                  <Text style={s.noCardsText}>No card runout for this question type.</Text>
+                </View>
+              )}
 
               <ResultBanner result={showCorrectness ? ds.lastResultType : null} />
 
               {!canContinue ? (
                 <DecisionButtons
-                  onYes={() => handleAnswer('yes')}
-                  onNo={() => handleAnswer('no')}
+                  options={challenge.answerOptions}
+                  onSelect={handleAnswer}
                   disabled={buttonsLocked}
                   selected={ds.selectedAnswer}
                 />
               ) : (
                 <ContinuePanel
                   scoreDelta={ds.lastScoreDelta}
-                  heroWins={challenge.heroWins}
+                  heroWins={challenge.category === 'action' ? challenge.heroWins : ds.lastResultType === 'correct'}
+                  showHandOutcome={challenge.category === 'action'}
                   streak={ds.currentStreak}
                   onContinue={handleContinue}
                 />
@@ -468,6 +480,15 @@ const s = StyleSheet.create({
   recapDelta:       { fontSize: 13, fontWeight: '600', width: 36, textAlign: 'right' },
   correct:          { color: '#4caf50' },
   incorrect:        { color: '#e94560' },
+  noCardsWrap: {
+    marginTop: 6,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  noCardsText: {
+    color: T.muted,
+    fontSize: 12,
+  },
   popOverlay: {
     position: 'absolute',
     top: '30%' as any,

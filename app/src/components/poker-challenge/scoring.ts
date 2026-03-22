@@ -8,11 +8,26 @@ export const LEVEL_THRESHOLDS: Record<number, number> = {
   21: 2540, 22: 2880, 23: 3250, 24: 3650, 25: 4100,
 };
 
-export function getScoreDelta(isCorrect: boolean, heroWins: boolean): number {
-  if (isCorrect && heroWins)   return 13;
-  if (isCorrect && !heroWins)  return 7;
-  if (!isCorrect && heroWins)  return -5;
-  return -10; // incorrect + lose
+export const MAX_CHALLENGE_LEVEL = 25;
+
+export function getScoreDelta(
+  isCorrect: boolean,
+  heroWins: boolean,
+  category: 'action' | 'outs' | 'ev' = 'action',
+  selectedAnswer?: string,
+): number {
+  // Outs / EV: pure answer score only
+  if (category !== 'action') {
+    return isCorrect ? 10 : -10;
+  }
+  // Action: answer score ±10, plus hand-result bonus unless the answer was FOLD
+  const answerScore = isCorrect ? 10 : -10;
+  const isFold = selectedAnswer != null && selectedAnswer.trim().toUpperCase() === 'FOLD';
+  if (isFold) {
+    return answerScore;
+  }
+  const handBonus = heroWins ? 3 : -3;
+  return answerScore + handBonus;
 }
 
 export function applyScore(current: number, delta: number): number {
@@ -20,5 +35,5 @@ export function applyScore(current: number, delta: number): number {
 }
 
 export function getPointsRequired(level: number): number {
-  return LEVEL_THRESHOLDS[level] ?? 4100;
+  return LEVEL_THRESHOLDS[level] ?? LEVEL_THRESHOLDS[MAX_CHALLENGE_LEVEL];
 }

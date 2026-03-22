@@ -9,6 +9,7 @@ import {
   clearUserProgress,
   PokerChallengeProgress,
 } from './progressStorage';
+import { getInitialStats } from './stats';
 import { pokerProgressApi } from '../../api/pokerProgress';
 
 export function usePokerProgress() {
@@ -82,11 +83,12 @@ export function usePokerProgress() {
       await clearUserProgress(userId);
       pokerProgressApi.saveProgress({
         level: 1, score: 0, handsCompleted: 0,
-        currentChallengeIndex: 0, challengeHistory: [],
+        currentChallengeIndex: 0, currentChallengeId: null, challengeHistory: [],
         wheelPending: false, lastWheelResult: null,
+        grandChampionUnlocked: false,
         updatedAt: new Date().toISOString(),
-        stats: undefined as any,
-      } as any).catch(() => {});
+        stats: getInitialStats(),
+      }).catch(() => {});
     } else {
       await clearGuestProgress();
     }

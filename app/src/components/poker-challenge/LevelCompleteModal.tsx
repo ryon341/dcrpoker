@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet, Image } from 'react-native';
 import { T } from '../ui/Theme';
 import { playSound } from './gameAudio';
 import { triggerLevelUpHaptic } from './gameHaptics';
@@ -12,10 +12,23 @@ interface Props {
   currentTitle:     string;
   nextTitleInfo:    { title: string; unlockLevel: number } | null;
   titleJustUnlocked: boolean;
+  isFinalLevel:     boolean;
+  grandChampionUnlocked: boolean;
   onAdvance:        () => void;
 }
 
-export function LevelCompleteModal({ visible, level, score, nextThreshold, currentTitle, nextTitleInfo, titleJustUnlocked, onAdvance }: Props) {
+export function LevelCompleteModal({
+  visible,
+  level,
+  score,
+  nextThreshold,
+  currentTitle,
+  nextTitleInfo,
+  titleJustUnlocked,
+  isFinalLevel,
+  grandChampionUnlocked,
+  onAdvance,
+}: Props) {
   const cardAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -57,7 +70,9 @@ export function LevelCompleteModal({ visible, level, score, nextThreshold, curre
 
           <Text style={s.title}>Well played!</Text>
           <Text style={s.sub}>
-            Your score carries forward into Level {level + 1}.
+            {isFinalLevel
+              ? 'You completed the full 25-level ladder.'
+              : `Your score carries forward into Level ${level + 1}.`}
           </Text>
 
           {/* Score summary */}
@@ -70,26 +85,45 @@ export function LevelCompleteModal({ visible, level, score, nextThreshold, curre
               <Text style={s.arrowText}>→</Text>
             </View>
             <View style={s.scoreBox}>
-              <Text style={s.scoreBoxLabel}>Next Goal</Text>
+              <Text style={s.scoreBoxLabel}>{isFinalLevel ? 'Final Goal' : 'Next Goal'}</Text>
               <Text style={s.scoreBoxValue}>{nextThreshold}</Text>
             </View>
           </View>
 
           <View style={s.divider} />
 
-          <Text style={s.nextLabel}>Advancing to</Text>
-          <Text style={s.nextLevel}>Level {level + 1}</Text>
+          {isFinalLevel ? (
+            <>
+              <Image source={require('../../../assets/dcrchampion.png')} style={s.championImage} resizeMode="contain" />
+              <Text style={s.nextLabel}>Final Reward</Text>
+              <Text style={s.nextLevel}>Grand Champion</Text>
+            </>
+          ) : (
+            <>
+              <Text style={s.nextLabel}>Advancing to</Text>
+              <Text style={s.nextLevel}>Level {level + 1}</Text>
+            </>
+          )}
 
           {/* Current title + next title hint */}
           <View style={s.titleRow}>
             <Text style={s.titleCurrent}>{currentTitle}</Text>
-            {nextTitleInfo && (
+            {!isFinalLevel && nextTitleInfo && (
               <Text style={s.titleNext}>Next: {nextTitleInfo.title} at Lvl {nextTitleInfo.unlockLevel}</Text>
+            )}
+            {isFinalLevel && (
+              <Text style={s.titleNext}>
+                {grandChampionUnlocked ? 'Champion status saved.' : 'Unlock your permanent champion status.'}
+              </Text>
             )}
           </View>
 
           <TouchableOpacity style={s.btn} onPress={onAdvance} activeOpacity={0.8}>
-            <Text style={s.btnText}>Advance to Level {level + 1} →</Text>
+            <Text style={s.btnText}>
+              {isFinalLevel
+                ? (grandChampionUnlocked ? 'Continue' : 'Claim Grand Champion')
+                : `Advance to Level ${level + 1} →`}
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -115,6 +149,7 @@ const s = StyleSheet.create({
   divider:        { height: 1, backgroundColor: T.border, alignSelf: 'stretch', marginVertical: 4 },
   nextLabel:      { color: T.muted, fontSize: 12, letterSpacing: 1 },
   nextLevel:      { color: T.gold, fontSize: 22, fontWeight: 'bold' },
+  championImage:  { width: 150, height: 92, marginTop: 4 },
   titleBanner:    { backgroundColor: 'rgba(251,191,36,0.18)', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 7, borderWidth: 1, borderColor: T.gold },
   titleBannerText: { color: T.gold, fontSize: 13, fontWeight: '700' },
   titleRow:       { alignItems: 'center', gap: 2 },

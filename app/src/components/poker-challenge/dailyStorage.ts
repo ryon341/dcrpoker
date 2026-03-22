@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type DailyChallengeAnswer = {
   challengeId:    string;
-  selectedAnswer: 'yes' | 'no';
+  selectedAnswer: string;
   isCorrect:      boolean;
   heroWins:       boolean;
   delta:          number;

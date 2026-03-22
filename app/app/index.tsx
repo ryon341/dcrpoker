@@ -42,20 +42,35 @@ function NavBar({ wide }: { wide: boolean }) {
         )}
       </View>
 
-      {/* ── mobile guest quicklinks row ── */}
+      {/* ── mobile guest quicklinks — two rows ── */}
       {!wide && (
-        <View style={nav.mobileRow}>
-          {NAV_LINKS.map(([icon, label, href]) => (
-            <TouchableOpacity
-              key={label}
-              style={nav.mobilePill}
-              onPress={() => router.push(href as any)}
-              activeOpacity={0.75}
-            >
-              <Text style={nav.mobilePillIcon}>{icon}</Text>
-              <Text style={nav.mobilePillText}>{label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={nav.mobileRows}>
+          <View style={nav.mobileRow}>
+            {NAV_LINKS.slice(0, 3).map(([icon, label, href]) => (
+              <TouchableOpacity
+                key={label}
+                style={nav.mobilePill}
+                onPress={() => router.push(href as any)}
+                activeOpacity={0.75}
+              >
+                <Text style={nav.mobilePillIcon}>{icon}</Text>
+                <Text style={nav.mobilePillText}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={nav.mobileRow}>
+            {NAV_LINKS.slice(3).map(([icon, label, href]) => (
+              <TouchableOpacity
+                key={label}
+                style={nav.mobilePill}
+                onPress={() => router.push(href as any)}
+                activeOpacity={0.75}
+              >
+                <Text style={nav.mobilePillIcon}>{icon}</Text>
+                <Text style={nav.mobilePillText}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
     </View>
@@ -460,10 +475,11 @@ const nav = StyleSheet.create({
   signIn:     { backgroundColor: T.gold, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20 },
   signInText: { color: '#0c0a09', fontWeight: '700', fontSize: 14 },
   // mobile guest quicklinks
-  mobileRow:     { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10, paddingBottom: 4 },
-  mobilePill:    { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: T.border },
-  mobilePillIcon:{ fontSize: 13 },
-  mobilePillText:{ color: T.silver, fontSize: 13, fontWeight: '600' },
+  mobileRows:    { marginTop: 10, paddingHorizontal: 8, paddingBottom: 6, gap: 6 },
+  mobileRow:     { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  mobilePill:    { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: T.border },
+  mobilePillIcon:{ fontSize: 12 },
+  mobilePillText:{ color: T.silver, fontSize: 12, fontWeight: '600' },
 });
 
 const hero = StyleSheet.create({

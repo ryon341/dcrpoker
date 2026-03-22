@@ -2,18 +2,19 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { T } from '../ui/Theme';
 
 interface Props {
-  question: string;
+  /** Scenario text — no action question embedded. */
+  scenario: string;
   explanation?: string;
   showExplanation?: boolean;
 }
 
-export function QuestionPanel({ question, explanation, showExplanation }: Props) {
+export function QuestionPanel({ scenario, explanation, showExplanation }: Props) {
   return (
     <View style={s.outer}>
       <Image source={require('../../../assets/ui-panel.png')} style={s.bg} resizeMode="stretch" />
       <View style={s.content}>
-        <Text style={s.tag}>GTO DECISION</Text>
-        <Text style={s.question}>{question}</Text>
+        <Text style={s.tag}>GTO SCENARIO</Text>
+        <Text style={s.question}>{scenario}</Text>
         {showExplanation && explanation && (
           <View style={s.expWrap}>
             <View style={s.expDivider} />
