@@ -1,0 +1,108 @@
+Use the code below as a reference only and build a sharp looking front end that includes the logo.png file from the src directory
+
+
+
+
+
+xport default function DCRPokerLoginPage() {
+  return (
+    <>
+      <div className="min-h-screen bg-[#0b0b0c] text-stone-100 relative overflow-hidden">
+        {/* Atmosphere Lighting */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(180,138,58,0.18),transparent_40%),radial-gradient(circle_at_bottom,rgba(120,72,28,0.12),transparent_45%)]" />
+
+        {/* Subtle vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40" />
+
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
+          <div className="w-full max-w-md">
+
+            {/* Logo */}
+            <div className="text-center mb-10">
+              <div className="flex justify-center">
+                <img
+                  src="/assets/logo.jpg"
+                  alt="DCR Poker"
+                  className="h-20 w-auto object-contain drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+                />
+              </div>
+
+              <p className="mt-6 text-stone-400 text-sm">
+                Private games • Tools • Training • Bankroll
+              </p>
+            </div>
+
+            {/* Login Card */}
+            <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+              <div>
+                <div className="text-sm uppercase tracking-[0.2em] text-amber-300/70">Sign in</div>
+                <h2 className="mt-2 text-3xl font-bold text-stone-50">Welcome back</h2>
+              </div>
+
+              <div className="mt-8 space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-stone-200">Email address</label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3.5 text-stone-50 outline-none transition focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20"
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="block text-sm font-medium text-stone-200">Password</label>
+                    <button className="text-sm text-amber-300 hover:text-amber-200">Forgot?</button>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3.5 text-stone-50 outline-none transition focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4 text-sm text-stone-300/85">
+                  <label className="inline-flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-transparent" />
+                    Remember me
+                  </label>
+                  <span className="text-stone-400">Secure login</span>
+                </div>
+
+                <button className="w-full rounded-2xl bg-amber-400 px-4 py-3.5 text-base font-bold text-stone-950 transition hover:brightness-105">
+                  Sign In
+                </button>
+
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-[#151518] px-3 text-sm text-stone-400">or continue with</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 font-medium text-stone-100 hover:bg-white/[0.05]">
+                    Google
+                  </button>
+                  <button className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 font-medium text-stone-100 hover:bg-white/[0.05]">
+                    Apple
+                  </button>
+                </div>
+              </div>
+
+              <p className="mt-8 text-center text-sm text-stone-400">
+                New here? <button className="font-semibold text-amber-300 hover:text-amber-200">Create an account</button>
+              </p>
+            </div>
+
+            <div className="mt-6 text-center text-xs text-stone-500">
+              Deer Creek Road Poker • premium tools for serious players
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
