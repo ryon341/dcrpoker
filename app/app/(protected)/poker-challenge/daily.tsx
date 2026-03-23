@@ -6,7 +6,9 @@ import { TIMING }          from '../../../src/components/poker-challenge/animati
 import { useAuth }         from '../../../src/context/AuthContext';
 import { QuestionPanel }   from '../../../src/components/poker-challenge/QuestionPanel';
 import { HandDisplay }     from '../../../src/components/poker-challenge/HandDisplay';
+import { OutsCardDisplay } from '../../../src/components/poker-challenge/OutsCardDisplay';
 import { DecisionButtons } from '../../../src/components/poker-challenge/DecisionButtons';
+import { MultiChoiceButtons } from '../../../src/components/poker-challenge/MultiChoiceButtons';
 import { ResultBanner }    from '../../../src/components/poker-challenge/ResultBanner';
 import { ContinuePanel }   from '../../../src/components/poker-challenge/ContinuePanel';
 import { ScoreDeltaPop }   from '../../../src/components/poker-challenge/ScoreDeltaPop';
@@ -55,7 +57,9 @@ function buildState(
   todayId: string,
   saved: DailyChallengeProgress | null,
 ): DailyState {
-  const challenges = getDailyChallengeSet(todayId).map(adaptQuestionToRuntime);
+  const challenges = getDailyChallengeSet(todayId)
+    .map(adaptQuestionToRuntime)
+    .filter((c): c is RuntimeChallenge => c !== null);
   if (saved && saved.dailyId === todayId) {
     // Resume or show completed
     const streak = saved.answers.reduce((acc, a) => a.isCorrect ? acc + 1 : 0, 0);
@@ -322,38 +326,75 @@ export default function DailyChallengePage() {
             <>
               <View style={s.section}>
                 <Text style={s.sectionLabel}>Hand {handNumber} of {DAILY_HAND_COUNT}</Text>
-                <QuestionPanel
-                  scenario={challenge.scenario}
-                  explanation={challenge.explanation}
-                  showExplanation={showExplanation}
-                />
-              </View>
 
-              {challenge.heroHand && challenge.villainHand && challenge.runout ? (
-                <HandDisplay
-                  heroHand={challenge.heroHand}
-                  villainHand={challenge.villainHand}
-                  villainRevealed={showVillainCards}
-                  runout={challenge.runout}
-                  showFlop={showFlop}
-                  showTurn={showTurn}
-                  showRiver={showRiver}
-                />
-              ) : (
-                <View style={s.noCardsWrap}>
-                  <Text style={s.noCardsText}>No card runout for this question type.</Text>
-                </View>
-              )}
+                {/* Action questions: scenario text + full hand/runout display */}
+                {challenge.category === 'action' && (
+                  <>
+                    <QuestionPanel
+                      scenario={challenge.scenario}
+                      explanation={challenge.explanation}
+                      showExplanation={showExplanation}
+                      tag="GTO SCENARIO"
+                    />
+                    {challenge.heroHand && challenge.villainHand && challenge.runout ? (
+                      <HandDisplay
+                        heroHand={challenge.heroHand}
+                        villainHand={challenge.villainHand}
+                        villainRevealed={showVillainCards}
+                        runout={challenge.runout}
+                        showFlop={showFlop}
+                        showTurn={showTurn}
+                        showRiver={showRiver}
+                      />
+                    ) : null}
+                  </>
+                )}
+
+                {/* Outs questions: question text + parsed card display */}
+                {challenge.category === 'outs' && (
+                  <>
+                    <QuestionPanel
+                      scenario={challenge.scenario}
+                      explanation={challenge.explanation}
+                      showExplanation={showExplanation}
+                      tag="OUTS"
+                    />
+                    <OutsCardDisplay
+                      heroCards={challenge.heroCards}
+                      boardCards={challenge.boardCards}
+                    />
+                  </>
+                )}
+
+                {/* EV / pot-odds questions: math prompt, no cards */}
+                {challenge.category === 'ev' && (
+                  <QuestionPanel
+                    scenario={challenge.scenario}
+                    explanation={challenge.explanation}
+                    showExplanation={showExplanation}
+                    tag="POT ODDS"
+                  />
+                )}
+              </View>
 
               <ResultBanner result={showCorrectness ? ds.lastResultType : null} />
 
               {!canContinue ? (
-                <DecisionButtons
-                  options={challenge.answerOptions}
-                  onSelect={handleAnswer}
-                  disabled={buttonsLocked}
-                  selected={ds.selectedAnswer}
-                />
+                challenge.category === 'action' ? (
+                  <DecisionButtons
+                    options={challenge.answerOptions}
+                    onSelect={handleAnswer}
+                    disabled={buttonsLocked}
+                    selected={ds.selectedAnswer}
+                  />
+                ) : (
+                  <MultiChoiceButtons
+                    options={challenge.answerOptions}
+                    onSelect={handleAnswer}
+                    disabled={buttonsLocked}
+                    selected={ds.selectedAnswer}
+                  />
+                )
               ) : (
                 <ContinuePanel
                   scoreDelta={ds.lastScoreDelta}

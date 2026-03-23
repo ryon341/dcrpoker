@@ -28,7 +28,7 @@ function makeActionQuestion(level: Level, idx: number, seed: ActionSeed): Challe
     tierIndex: 1,
     level,
     category: 'action',
-    prompt: `Beginner L${level} Action: ${seed.prompt}`,
+    prompt: seed.prompt,
     explanation:
       seed.correctAction === 'raise'
         ? 'This is a clear value/profit open or aggressive preflop decision at beginner depth.'
@@ -50,7 +50,7 @@ function makeMathQuestion(level: Level, idx: number, category: ChallengeCategory
     tierIndex: 1,
     level,
     category,
-    prompt: `Beginner L${level} ${category.toUpperCase()}: ${seed.prompt}`,
+    prompt: seed.prompt,
     explanation: seed.explanation,
     choices: seed.choices,
     correctAnswer: seed.correctAnswer,
@@ -152,10 +152,10 @@ const level3ActionSeeds: ActionSeed[] = [
   { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.5bb and cutoff calls. You are on the button with AQo.', correctAction: 'raise', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l3', 'isolation', 'broadway'], difficultyScore: 35 },
   { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.5bb and hijack calls. You are in the cutoff with 66.', correctAction: 'call', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l3', 'set-mine', 'pair'], difficultyScore: 34 },
   { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.5bb and cutoff calls. You are on the button with KQs.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l3', 'multiway', 'suited-broadway'], difficultyScore: 35 },
-  { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.5bb. You are in the cutoff with QTs.', correctAction: 'fold', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l3', 'vs-open', 'fold'], difficultyScore: 35 },
+  { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.5bb. You are in the cutoff with QTs.', correctAction: 'call', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l3', 'vs-open', 'call'], difficultyScore: 35 },
   { prompt: '6-max cash game. 100bb effective. Folded to you in the cutoff with A4s.', correctAction: 'raise', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l3', 'open', 'suited-ace'], difficultyScore: 31 },
   { prompt: '6-max cash game. 100bb effective. Folded to you on the button with 44.', correctAction: 'raise', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l3', 'open', 'small-pair'], difficultyScore: 31 },
-  { prompt: '6-max cash game. 100bb effective. Folded to you in the hijack with T8s.', correctAction: 'raise', heroPosition: 'HJ', effectiveStackBb: 100, tags: ['l3', 'open', 'suited-connector'], difficultyScore: 32 },
+  { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.5bb. You are on the button with QTs.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l3', 'vs-open', 'suited-broadway'], difficultyScore: 33 },
 ];
 
 const level4ActionSeeds: ActionSeed[] = [
@@ -166,7 +166,7 @@ const level4ActionSeeds: ActionSeed[] = [
   { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.3bb. You are in the cutoff with AJs.', correctAction: 'call', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'call'], difficultyScore: 41 },
   { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.5bb. You are in the cutoff with A5s.', correctAction: 'raise', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l4', 'vs-open', '3bet-bluff'], difficultyScore: 43 },
   { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.5bb. You are on the button with 99.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'pair'], difficultyScore: 42 },
-  { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.5bb. You are on the button with 66.', correctAction: 'fold', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'fold'], difficultyScore: 43 },
+  { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.5bb. You are on the button with 66.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'pair'], difficultyScore: 43 },
   { prompt: '6-max cash game. 100bb effective. Cutoff opens to 2.5bb. You are on the button with AJo.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'ace-x'], difficultyScore: 42 },
   { prompt: '6-max cash game. 100bb effective. Cutoff opens to 2.5bb. You are on the button with K9s.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l4', 'vs-open', 'suited'], difficultyScore: 43 },
   { prompt: '6-max cash game. 100bb effective. Cutoff opens to 2.5bb. You are in the small blind with AQs.', correctAction: 'raise', heroPosition: 'SB', effectiveStackBb: 100, tags: ['l4', 'blind-vs-open', '3bet'], difficultyScore: 44 },
@@ -193,13 +193,13 @@ const level4ActionSeeds: ActionSeed[] = [
 
 const level5ActionSeeds: ActionSeed[] = [
   { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.2bb. You are in middle position with JJ.', correctAction: 'call', heroPosition: 'MP', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'pair'], difficultyScore: 50 },
-  { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.2bb. You are in middle position with TT.', correctAction: 'fold', heroPosition: 'MP', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'fold'], difficultyScore: 52 },
+  { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.2bb. You are in middle position with TT.', correctAction: 'call', heroPosition: 'MP', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'pair'], difficultyScore: 52 },
   { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.2bb. You are on the button with AQs.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'call'], difficultyScore: 51 },
   { prompt: '6-max cash game. 100bb effective. Under the gun opens to 2.2bb. You are on the button with AQo.', correctAction: 'fold', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'fold'], difficultyScore: 52 },
   { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.3bb. You are in the cutoff with KQs.', correctAction: 'call', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'call'], difficultyScore: 51 },
   { prompt: '6-max cash game. 100bb effective. Middle position opens to 2.3bb. You are in the cutoff with A5s.', correctAction: 'raise', heroPosition: 'CO', effectiveStackBb: 100, tags: ['l5', 'vs-open', '3bet-bluff'], difficultyScore: 53 },
   { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.3bb. You are on the button with 99.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'pair'], difficultyScore: 51 },
-  { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.3bb. You are on the button with 77.', correctAction: 'fold', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'fold'], difficultyScore: 52 },
+  { prompt: '6-max cash game. 100bb effective. Hijack opens to 2.3bb. You are on the button with 77.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'pair'], difficultyScore: 52 },
   { prompt: '6-max cash game. 100bb effective. Cutoff opens to 2.3bb. You are on the button with ATo.', correctAction: 'call', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'call'], difficultyScore: 52 },
   { prompt: '6-max cash game. 100bb effective. Cutoff opens to 2.3bb. You are on the button with KTo.', correctAction: 'fold', heroPosition: 'BTN', effectiveStackBb: 100, tags: ['l5', 'vs-open', 'fold'], difficultyScore: 53 },
   { prompt: '6-max cash game. 100bb effective. Button opens to 2.2bb. You are in the small blind with AJo.', correctAction: 'raise', heroPosition: 'SB', effectiveStackBb: 100, tags: ['l5', 'blind-vs-btn', '3bet'], difficultyScore: 53 },
@@ -240,7 +240,7 @@ const level1OutsSeeds: MathSeed[] = [
 const level2OutsSeeds: MathSeed[] = [
   { prompt: 'You hold Ah 5h on Kh 8c 2h. How many outs complete a flush by the river?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: 'A four-flush has 9 outs.', tags: ['l2', 'outs', 'flush-draw'], difficultyScore: 22 },
   { prompt: 'You hold 6s 7s on 8d 9c 2h. How many outs complete a straight?', choices: ['4', '6', '8', '10'], correctAnswer: '8', explanation: 'Any 5 or T completes the straight.', tags: ['l2', 'outs', 'oesd'], difficultyScore: 22 },
-  { prompt: 'You hold Qs Js on Td 4h 2c. How many outs complete your straight?', choices: ['4', '6', '8', '9'], correctAnswer: '4', explanation: 'Only a K completes the straight here.', tags: ['l2', 'outs', 'gutshot'], difficultyScore: 23 },
+  { prompt: 'You hold Qs Js on Ah Kd 2c. How many outs complete your straight?', choices: ['4', '6', '8', '9'], correctAnswer: '4', explanation: 'Only a T completes your straight (A-K-Q-J-T).', tags: ['l2', 'outs', 'gutshot'], difficultyScore: 23 },
   { prompt: 'You hold Ac Kc on 7d 2s 9h. How many overcard outs do you have on the turn?', choices: ['4', '5', '6', '8'], correctAnswer: '6', explanation: 'Three aces and three kings.', tags: ['l2', 'outs', 'overcards'], difficultyScore: 23 },
   { prompt: 'You hold 4d 4s on Qc 8h 2d. How many outs improve you to trips on the turn?', choices: ['1', '2', '3', '4'], correctAnswer: '2', explanation: 'Two fours remain.', tags: ['l2', 'outs', 'pair-to-trips'], difficultyScore: 22 },
   { prompt: 'You hold Jd Td on 9d 8d 2c. How many outs improve you to a flush or straight (count overlap once)?', choices: ['12', '13', '15', '17'], correctAnswer: '15', explanation: '9 flush outs + 8 straight outs - 2 overlap.', tags: ['l2', 'outs', 'combo-draw'], difficultyScore: 24 },

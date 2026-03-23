@@ -3,7 +3,9 @@
 import type { ChallengeTier, ChallengeQuestion } from './challengeQuestionTypes';
 import {
   getQuestionsForGlobalLevel,
+  getQuestionsForTier,
   getTierForGlobalLevel,
+  getPreviousTierForGlobalLevel,
 } from './data/tierQuestionBanks';
 
 /** Maps a 1-based global level to the canonical challenge tier. */
@@ -99,6 +101,69 @@ export function getNextFromSession(
   }
 
   return poolMap.get(pickedId)!;
+}
+
+// ── Session pool helpers ──────────────────────────────────────────────────────
+
+/**
+ * Build a shuffled pool of `count` question IDs for a given level.
+ * Persist the returned array as `sessionQuestionIds` so that a refresh
+ * can restore the exact same session without reshuffling.
+ *
+ * For Tier 2+ levels (global level >= 6), enforces the 80% native /
+ * 20% carryover progression rule so players always see ~2 review
+ * questions from the previous tier each session.
+ *
+ * Carryover is detected two ways:
+ *   1. Questions with `sourceTier` field pointing to the previous tier
+ *      (used by Tier 2 / Apprentice which has embedded carryover).
+ *   2. Cross-pool fallback: if the level's bank has no embedded carryover,
+ *      pull questions directly from the previous tier's full bank.
+ *      (Used for Tier 3+ which use auto-generated banks without sourceTier.)
+ */
+export function buildSessionPool(level: number, count: number): string[] {
+  const pool = poolForLevel(level);
+
+  if (level > 5) {
+    const native    = pool.filter(q => !q.sourceTier || q.sourceTier === q.tier);
+    const embedded  = pool.filter(q => !!q.sourceTier && q.sourceTier !== q.tier);
+
+    // Determine the carryover source: embedded in pool first, else previous tier's bank
+    let carryoverIds: string[];
+    if (embedded.length > 0) {
+      carryoverIds = embedded.map(c => c.id);
+    } else {
+      const prevTier = getPreviousTierForGlobalLevel(level);
+      carryoverIds = prevTier ? getQuestionsForTier(prevTier).map(c => c.id) : [];
+    }
+
+    if (carryoverIds.length > 0 && native.length > 0) {
+      const carryCount  = Math.max(1, Math.floor(count * 0.2));
+      const nativeCount = count - carryCount;
+      const pickedNative    = shuffle(native.map(c => c.id)).slice(0, Math.min(nativeCount, native.length));
+      const pickedCarryover = shuffle(carryoverIds).slice(0, Math.min(carryCount, carryoverIds.length));
+      return shuffle([...pickedNative, ...pickedCarryover]);
+    }
+  }
+
+  const ids = shuffle(pool.map(c => c.id));
+  return ids.slice(0, Math.min(count, ids.length));
+}
+
+/**
+ * Look up a question by ID from the pool for the given level.
+ * Also searches the previous tier's bank to handle carryover question IDs.
+ * Returns null if the ID cannot be found (e.g. question was removed).
+ */
+export function getQuestionById(level: number, id: string): ChallengeQuestion | null {
+  const found = poolForLevel(level).find(c => c.id === id);
+  if (found) return found;
+  // Carryover fallback: search the previous tier's full bank
+  const prevTier = getPreviousTierForGlobalLevel(level);
+  if (prevTier) {
+    return getQuestionsForTier(prevTier).find(c => c.id === id) ?? null;
+  }
+  return null;
 }
 
 // ── Legacy single-call API (used by existing handleContinue path) ─────────────

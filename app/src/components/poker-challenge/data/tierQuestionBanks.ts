@@ -54,6 +54,22 @@ export function getLocalLevelWithinTier(globalLevel: number): 1 | 2 | 3 | 4 | 5 
   return localLevel as 1 | 2 | 3 | 4 | 5;
 }
 
+/**
+ * Returns the tier that feeds carryover questions into the given global level's tier.
+ * Tier 2 (apprentice) carries from Tier 1 (beginner), Tier 3 from Tier 2, etc.
+ * Returns null for Tier 1 (no predecessor).
+ */
+export function getPreviousTierForGlobalLevel(globalLevel: number): ChallengeTier | null {
+  const tierIndex = getTierIndexForGlobalLevel(globalLevel);
+  switch (tierIndex) {
+    case 2: return 'beginner';
+    case 3: return 'apprentice';
+    case 4: return 'grinder';
+    case 5: return 'chip_leader';
+    default: return null;
+  }
+}
+
 export function getQuestionsForGlobalLevel(globalLevel: number): ChallengeQuestion[] {
   const tier = getTierForGlobalLevel(globalLevel);
   const localLevel = getLocalLevelWithinTier(globalLevel);

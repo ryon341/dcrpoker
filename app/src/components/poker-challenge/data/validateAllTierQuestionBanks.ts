@@ -15,7 +15,7 @@ const EXPECTED_CATEGORY_DISTRIBUTION: Record<
   { action: number; outs: number; ev: number }
 > = {
   beginner: { action: 150, outs: 50, ev: 50 },
-  apprentice: { action: 150, outs: 62, ev: 38 },
+  apprentice: { action: 150, outs: 50, ev: 50 },
   grinder: { action: 150, outs: 62, ev: 38 },
   chip_leader: { action: 150, outs: 62, ev: 38 },
   master: { action: 150, outs: 62, ev: 38 },

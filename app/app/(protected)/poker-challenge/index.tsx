@@ -1,23 +1,26 @@
-﻿import { useState, useEffect, useRef, useMemo } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Alert, ScrollView, View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
 import { T }                    from '../../../src/components/ui/Theme';
 import { TIMING }               from '../../../src/components/poker-challenge/animations';
 import { usePokerProgress }     from '../../../src/components/poker-challenge/usePokerProgress';
 import { ChallengeHeader }      from '../../../src/components/poker-challenge/ChallengeHeader';
 import { QuestionPanel }        from '../../../src/components/poker-challenge/QuestionPanel';
 import { HandDisplay }          from '../../../src/components/poker-challenge/HandDisplay';
+import { OutsCardDisplay }      from '../../../src/components/poker-challenge/OutsCardDisplay';
 import { DecisionButtons }      from '../../../src/components/poker-challenge/DecisionButtons';
+import { MultiChoiceButtons }   from '../../../src/components/poker-challenge/MultiChoiceButtons';
 import { ResultBanner }         from '../../../src/components/poker-challenge/ResultBanner';
 import { ContinuePanel }        from '../../../src/components/poker-challenge/ContinuePanel';
-import { ScoreRulesPanel }      from '../../../src/components/poker-challenge/ScoreRulesPanel';
 import { ScoreDeltaPop }        from '../../../src/components/poker-challenge/ScoreDeltaPop';
 import { WheelModal }           from '../../../src/components/poker-challenge/WheelModal';
 import { LevelCompleteModal }   from '../../../src/components/poker-challenge/LevelCompleteModal';
 import { LoginGateModal }       from '../../../src/components/poker-challenge/LoginGateModal';
-import { getNextChallenge }     from '../../../src/components/poker-challenge/challengeSelector';
+import { SessionSummaryModal }  from '../../../src/components/poker-challenge/SessionSummaryModal';
+import { TierCompleteModal }    from '../../../src/components/poker-challenge/TierCompleteModal';
+import { LevelSelectPanel }     from '../../../src/components/poker-challenge/LevelSelectPanel';
+import { getNextChallenge, buildSessionPool, getQuestionById } from '../../../src/components/poker-challenge/challengeSelector';
 import { getScoreDelta, applyScore, getPointsRequired, MAX_CHALLENGE_LEVEL } from '../../../src/components/poker-challenge/scoring';
 import { StatsPanel }          from '../../../src/components/poker-challenge/StatsPanel';
-import { StreakBadge }         from '../../../src/components/poker-challenge/StreakBadge';
 import { getInitialStats, applyHandStats, applyWheelStats, applyLevelProgress } from '../../../src/components/poker-challenge/stats';
 import type { PokerStats }     from '../../../src/components/poker-challenge/stats';
 import { getTitleForLevel, getNextTitle, isTitleUnlockLevel } from '../../../src/components/poker-challenge/titleSystem';
@@ -35,8 +38,67 @@ import {
   type RuntimeChallenge,
 } from '../../../src/components/poker-challenge/challengeQuestionAdapter';
 
-const SCORE_TABLE     = { correctWin: 13, correctLose: 7, incorrectWin: -7, incorrectLose: -13 };
+/** Get the next valid (non-null) RuntimeChallenge, retrying if a question is malformed. */
+function safeAdapt(level: number, history: string[]): RuntimeChallenge {
+  // Try up to 10 different questions before giving up
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const q = getNextChallenge({ level, history });
+    const rt = adaptQuestionToRuntime(q);
+    if (rt) return rt;
+    // push the bad id so it doesn't get re-selected immediately
+    history = [...history, q.id];
+  }
+  // Last resort fallback — a valid synthetic question so the screen never crashes
+  return {
+    id:           'fallback',
+    category:     'action',
+    panelTitle:   'GTO SCENARIO',
+    scenario:     'What is the best action in this spot?',
+    explanation:  '',
+    answerOptions:['FOLD', 'CALL', 'RAISE'],
+    correctAnswer:'FOLD',
+    heroWins:     false,
+    tags:         [],
+  };
+}
+
+/**
+ * Adapt the question at `ids[idx]` to a RuntimeChallenge.
+ * Walks forward through the pool if a question fails adaptation,
+ * then falls back to safeAdapt() for a random pick.
+ */
+function safeAdaptFromPool(level: number, ids: string[], idx: number): RuntimeChallenge {
+  for (let attempt = 0; attempt < ids.length; attempt++) {
+    const targetIdx = (idx + attempt) % ids.length;
+    const q = getQuestionById(level, ids[targetIdx]);
+    if (q) {
+      const rt = adaptQuestionToRuntime(q);
+      if (rt) return rt;
+    }
+  }
+  // All pool entries failed adaptation — fall back to random pick
+  return safeAdapt(level, []);
+}
+
 const MAX_GUEST_LEVEL = 5;
+/** Number of questions per level play session. */
+const SESSION_LENGTH  = 12;
+/** Minimum fraction correct to pass a session and unlock the next level. */
+const SESSION_PASS_THRESHOLD = 0.7;
+
+// ── Tier system ────────────────────────────────────────────────────────────
+const TIER_NAMES     = ['Beginner', 'Apprentice', 'Grinder', 'Chip Leader', 'Master'];
+const LEVELS_PER_TIER = 5;
+
+function getTierForLevel(level: number): string {
+  const idx = Math.floor((level - 1) / LEVELS_PER_TIER);
+  return TIER_NAMES[Math.min(idx, TIER_NAMES.length - 1)];
+}
+
+function getNextTier(tier: string): string | null {
+  const idx = TIER_NAMES.indexOf(tier);
+  return idx >= 0 && idx < TIER_NAMES.length - 1 ? TIER_NAMES[idx + 1] : null;
+}
 
 interface GameState {
   level: number;
@@ -52,14 +114,36 @@ interface GameState {
   grandChampionUnlocked: boolean;
   loginRequiredForNextLevel: boolean;
   stats: PokerStats;
+  // ── Session tracking (TC078) ─────────────────────────────────────────────
+  /** Correct answers in the current session. */
+  sessionCorrect: number;
+  /** Total answers given in the current session (0 … SESSION_LENGTH). */
+  sessionTotal: number;
+  /** True once sessionTotal reaches SESSION_LENGTH. Clears on retry/advance. */
+  sessionComplete: boolean;
+  /** Global level numbers the user has unlocked. Always includes 1. */
+  unlockedLevels: number[];
+  /** The 12 question IDs pre-selected for this session (restores on reload). */
+  sessionQuestionIds: string[];
+  /** Index of the question currently being played in the session pool (0-based). */
+  sessionQuestionIndex: number;
+  /** Tier name currently active (e.g. 'Beginner'). */
+  currentTier: string;
+  /** Tier names the player has unlocked. Always includes 'Beginner'. */
+  unlockedTiers: string[];
+  /** Tier names where all levels have been passed at least once. */
+  completedTiers: string[];
+  /** True while the tier-complete modal should be visible. Cleared on any navigation. */
+  tierComplete: boolean;
 }
 
 function makeInitialState(): GameState {
+  const initialPool = buildSessionPool(1, SESSION_LENGTH);
   return {
     level: 1,
     score: 0,
     handsCompleted: 0,
-    currentChallenge: adaptQuestionToRuntime(getNextChallenge({ level: 1, history: [] })),
+    currentChallenge: safeAdaptFromPool(1, initialPool, 0),
     challengeHistory: [],
     selectedAnswer: null,
     lastScoreDelta: 0,
@@ -69,6 +153,16 @@ function makeInitialState(): GameState {
     grandChampionUnlocked: false,
     loginRequiredForNextLevel: false,
     stats: getInitialStats(),
+    sessionCorrect: 0,
+    sessionTotal: 0,
+    sessionComplete: false,
+    unlockedLevels: [1],
+    sessionQuestionIds:   initialPool,
+    sessionQuestionIndex: 0,
+    currentTier:    'Beginner',
+    unlockedTiers:  ['Beginner'],
+    completedTiers: [],
+    tierComplete:   false,
   };
 }
 
@@ -101,16 +195,40 @@ export default function PokerChallengePage() {
     const cappedLevel = Math.min(savedProgress.level, MAX_CHALLENGE_LEVEL);
     const level = isGuest ? Math.min(cappedLevel, MAX_GUEST_LEVEL) : cappedLevel;
     const history = savedProgress.challengeHistory ?? [];
+
+    // Restore the saved session pool, or build a fresh one if missing/expired
+    const savedIds   = savedProgress.sessionQuestionIds ?? [];
+    const savedIdx   = savedProgress.sessionQuestionIndex ?? 0;
+    const savedTotal = savedProgress.sessionTotal ?? 0;
+    // If the saved session is complete, start fresh rather than resuming into Q12
+    const sessionDone = savedTotal >= SESSION_LENGTH;
+    const hasPool     = savedIds.length === SESSION_LENGTH && !sessionDone;
+    if (__DEV__ && !hasPool) {
+      console.log(`[PokerChallenge] Building fresh session pool (savedIds=${savedIds.length}, sessionDone=${sessionDone})`);
+    }
+    const questionIds = hasPool ? savedIds : buildSessionPool(level, SESSION_LENGTH);
+    const questionIdx = hasPool ? Math.min(savedIdx, SESSION_LENGTH - 1) : 0;
+
     setGs(prev => ({
       ...prev,
       level,
-      score:            savedProgress.score,
-      handsCompleted:   savedProgress.handsCompleted,
-      currentChallenge: adaptQuestionToRuntime(getNextChallenge({ level, history })),
-      challengeHistory: history,
-      wheelPending:     savedProgress.wheelPending,
+      score:                 savedProgress.score,
+      handsCompleted:        savedProgress.handsCompleted,
+      currentChallenge:      safeAdaptFromPool(level, questionIds, questionIdx),
+      challengeHistory:      history,
+      wheelPending:          savedProgress.wheelPending,
       grandChampionUnlocked: !!savedProgress.grandChampionUnlocked,
-      stats:            savedProgress.stats ?? getInitialStats(),
+      stats:                 savedProgress.stats ?? getInitialStats(),
+      unlockedLevels:        savedProgress.unlockedLevels ?? [1],
+      sessionCorrect:        sessionDone ? 0 : (savedProgress.sessionCorrect ?? 0),
+      sessionTotal:          sessionDone ? 0 : savedTotal,
+      sessionComplete:       false,   // never restore into summary modal
+      sessionQuestionIds:    questionIds,
+      sessionQuestionIndex:  questionIdx,
+      currentTier:    savedProgress.currentTier   ?? 'Beginner',
+      unlockedTiers:  savedProgress.unlockedTiers  ?? ['Beginner'],
+      completedTiers: savedProgress.completedTiers ?? [],
+      tierComplete:   false,
     }));
     setRevealPhase(0);
 
@@ -125,7 +243,7 @@ export default function PokerChallengePage() {
         await clearAuthReturnTarget();
         const nextLevel    = level + 1;
         const newHistory: string[] = [];
-        const nextChallenge = adaptQuestionToRuntime(getNextChallenge({ level: nextLevel, history: newHistory }));
+        const nextChallenge = safeAdapt(nextLevel, newHistory);
         const nextStats     = applyLevelProgress(savedProgress.stats ?? getInitialStats(), nextLevel);
         setGs(prev => ({
           ...prev,
@@ -221,6 +339,14 @@ export default function PokerChallengePage() {
       grandChampionUnlocked: state.grandChampionUnlocked,
       updatedAt:             new Date().toISOString(),
       stats:                 state.stats,
+      unlockedLevels:        state.unlockedLevels,
+      sessionCorrect:        state.sessionCorrect,
+      sessionTotal:          state.sessionTotal,
+      sessionQuestionIds:    state.sessionQuestionIds,
+      sessionQuestionIndex:  state.sessionQuestionIndex,
+      currentTier:           state.currentTier,
+      unlockedTiers:         state.unlockedTiers,
+      completedTiers:        state.completedTiers,
       ...extra,
     };
   }
@@ -240,6 +366,7 @@ export default function PokerChallengePage() {
       lastResultType: isCorrect ? 'correct' : 'incorrect',
       score: newScore,
       stats: applyHandStats(gs.stats, { isCorrect, heroWins: handOutcomeForUi }),
+      sessionCorrect: gs.sessionCorrect + (isCorrect ? 1 : 0),
     };
     setGs(next);
     setRevealPhase(1);
@@ -256,24 +383,68 @@ export default function PokerChallengePage() {
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });
 
-    const newHands = gs.handsCompleted + 1;
-    const wheel    = newHands > 0 && newHands % 15 === 0;
-    // Don't re-trigger level-complete once grand champion is already claimed
-    const lvlDone  = !gs.grandChampionUnlocked && gs.score >= getPointsRequired(gs.level);
-    const newHistory = [...gs.challengeHistory.slice(-15), gs.currentChallenge.id];
-    const next: GameState = {
-      ...gs,
-      handsCompleted:   newHands,
-      currentChallenge: adaptQuestionToRuntime(getNextChallenge({ level: gs.level, history: newHistory })),
-      challengeHistory: newHistory,
-      selectedAnswer: null,
-      lastScoreDelta: 0,
-      lastResultType: null,
-      wheelPending:   wheel && !lvlDone,
-      levelComplete:  lvlDone,
-    };
-    setGs(next);
-    saveProgress(snap(next));
+    const newHands       = gs.handsCompleted + 1;
+    const newSessionTotal = gs.sessionTotal + 1;
+    const newHistory     = [...gs.challengeHistory.slice(-15), gs.currentChallenge.id];
+
+    if (newSessionTotal >= SESSION_LENGTH) {
+      // ── Session complete ────────────────────────────────────────────────────────────
+      // Detect first-time tier-completing pass (e.g. passing Beginner Level 5)
+      const finalCorrect   = gs.sessionCorrect; // handleAnswer already incremented this
+      const passed         = finalCorrect / SESSION_LENGTH >= SESSION_PASS_THRESHOLD;
+      const isTierEnd      = gs.level % LEVELS_PER_TIER === 0;
+      const tierName       = getTierForLevel(gs.level);
+      const tierAlreadyDone = gs.completedTiers.includes(tierName);
+      const isTierComplete = passed && isTierEnd && !tierAlreadyDone;
+
+      const newCompletedTiers = isTierComplete
+        ? Array.from(new Set([...gs.completedTiers, tierName]))
+        : gs.completedTiers;
+      const nextTierName    = getNextTier(tierName);
+      const newUnlockedTiers = isTierComplete && nextTierName
+        ? Array.from(new Set([...gs.unlockedTiers, nextTierName]))
+        : gs.unlockedTiers;
+
+      const next: GameState = {
+        ...gs,
+        handsCompleted:   newHands,
+        challengeHistory: newHistory,
+        selectedAnswer:   null,
+        lastScoreDelta:   0,
+        lastResultType:   null,
+        wheelPending:     false,
+        levelComplete:    false,
+        sessionTotal:     newSessionTotal,
+        // Suppress normal session summary when tier modal fires
+        sessionComplete:  !isTierComplete,
+        tierComplete:     isTierComplete,
+        completedTiers:   newCompletedTiers,
+        unlockedTiers:    newUnlockedTiers,
+      };
+      setGs(next);
+      saveProgress(snap(next));
+    } else {
+      // ── Continue session normally ─────────────────────────────────────────
+      const wheel   = newHands > 0 && newHands % 15 === 0;
+      // Don't re-trigger level-complete once grand champion is already claimed
+      const lvlDone = !gs.grandChampionUnlocked && gs.score >= getPointsRequired(gs.level);
+      const nextIdx = gs.sessionQuestionIndex + 1;
+      const next: GameState = {
+        ...gs,
+        handsCompleted:       newHands,
+        currentChallenge:     safeAdaptFromPool(gs.level, gs.sessionQuestionIds, nextIdx),
+        challengeHistory:     newHistory,
+        selectedAnswer:       null,
+        lastScoreDelta:       0,
+        lastResultType:       null,
+        wheelPending:         wheel && !lvlDone,
+        levelComplete:        lvlDone,
+        sessionTotal:         newSessionTotal,
+        sessionQuestionIndex: nextIdx,
+      };
+      setGs(next);
+      saveProgress(snap(next));
+    }
   }
 
   function handleWheelResult(pts: number) {
@@ -299,6 +470,10 @@ export default function PokerChallengePage() {
         level: MAX_CHALLENGE_LEVEL,
         levelComplete: false,
         grandChampionUnlocked: true,
+        tierComplete:   false,
+        sessionCorrect: 0,
+        sessionTotal: 0,
+        sessionComplete: false,
       };
       setGs(next);
       saveProgress(snap(next, { grandChampionUnlocked: true }));
@@ -307,29 +482,180 @@ export default function PokerChallengePage() {
 
     const nextLevel = gs.level + 1;
     if (isGuest && nextLevel > MAX_GUEST_LEVEL) {
-      setGs(prev => ({ ...prev, levelComplete: false, loginRequiredForNextLevel: true }));
+      setGs(prev => ({ ...prev, levelComplete: false, sessionComplete: false, tierComplete: false, loginRequiredForNextLevel: true }));
       return;
     }
     const newHistory: string[] = [];
+    // Unlock the next level in the progression list
+    const updatedUnlocked = Array.from(new Set([...gs.unlockedLevels, nextLevel]));
+    const newPool = buildSessionPool(nextLevel, SESSION_LENGTH);
     const next: GameState = {
       ...gs,
       level: nextLevel,
       levelComplete: false,
       loginRequiredForNextLevel: false,
-      currentChallenge: adaptQuestionToRuntime(getNextChallenge({ level: nextLevel, history: newHistory })),
-      challengeHistory: newHistory,
-      stats: applyLevelProgress(gs.stats, nextLevel),
+      tierComplete:         false,
+      currentChallenge:     safeAdaptFromPool(nextLevel, newPool, 0),
+      challengeHistory:     newHistory,
+      stats:                applyLevelProgress(gs.stats, nextLevel),
+      unlockedLevels:       updatedUnlocked,
+      currentTier:          getTierForLevel(nextLevel),
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionComplete:      false,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
     };
     setGs(next);
     saveProgress(snap(next));
   }
 
-  async function handleStartOver() {
+  function handleStartOver() {
+    Alert.alert(
+      'Reset Progress',
+      'This will erase all saved progress, scores, and unlocked levels. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            cancelTimers();
+            setRevealPhase(0);
+            setDeltaPop({ value: 0, show: false });
+            await resetProgress();
+            setGs(makeInitialState());
+          },
+        },
+      ],
+    );
+  }
+
+  function handleRetrySession() {
     cancelTimers();
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });
-    await resetProgress();
-    setGs(makeInitialState());
+    const newHistory: string[] = [];
+    const newPool = buildSessionPool(gs.level, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      currentChallenge:     safeAdaptFromPool(gs.level, newPool, 0),
+      challengeHistory:     newHistory,
+      selectedAnswer:       null,
+      lastScoreDelta:       0,
+      lastResultType:       null,
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionComplete:      false,
+      tierComplete:         false,
+      levelComplete:        false,
+      wheelPending:         false,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
+  function handleLevelSelect(level: number) {
+    if (!gs.unlockedLevels.includes(level) || level === gs.level) return;
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const newHistory: string[] = [];
+    const newPool = buildSessionPool(level, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      level,
+      currentChallenge:     safeAdaptFromPool(level, newPool, 0),
+      challengeHistory:     newHistory,
+      selectedAnswer:       null,
+      lastScoreDelta:       0,
+      lastResultType:       null,
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionComplete:      false,
+      tierComplete:         false,
+      levelComplete:        false,
+      wheelPending:         false,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+      currentTier:          getTierForLevel(level),
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
+  /** Advance to the first level of the next tier after tier completion modal. */
+  function handleTierContinue() {
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const nextLevel = gs.level + 1;
+    // Guest gate: level 6+ requires sign-in
+    if (isGuest && nextLevel > MAX_GUEST_LEVEL) {
+      setGs(prev => ({ ...prev, tierComplete: false, levelComplete: false, loginRequiredForNextLevel: true }));
+      return;
+    }
+    // Grand champion placeholder (future Level 25 final-reward hook)
+    if (gs.level >= MAX_CHALLENGE_LEVEL) {
+      const next: GameState = {
+        ...gs,
+        tierComplete:          false,
+        levelComplete:         false,
+        grandChampionUnlocked: true,
+      };
+      setGs(next);
+      saveProgress(snap(next, { grandChampionUnlocked: true }));
+      return;
+    }
+    const newUnlockedLevels = Array.from(new Set([...gs.unlockedLevels, nextLevel]));
+    const newPool = buildSessionPool(nextLevel, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      level:                nextLevel,
+      tierComplete:         false,
+      levelComplete:        false,
+      loginRequiredForNextLevel: false,
+      currentChallenge:     safeAdaptFromPool(nextLevel, newPool, 0),
+      challengeHistory:     [],
+      stats:                applyLevelProgress(gs.stats, nextLevel),
+      unlockedLevels:       newUnlockedLevels,
+      currentTier:          getTierForLevel(nextLevel),
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionComplete:      false,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
+  /** Replay the last level of the completed tier without leaving to a new tier. */
+  function handleTierReplay() {
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const newPool = buildSessionPool(gs.level, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      tierComplete:         false,
+      sessionComplete:      false,
+      levelComplete:        false,
+      wheelPending:         false,
+      currentChallenge:     safeAdaptFromPool(gs.level, newPool, 0),
+      challengeHistory:     [],
+      selectedAnswer:       null,
+      lastScoreDelta:       0,
+      lastResultType:       null,
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+    };
+    setGs(next);
+    saveProgress(snap(next));
   }
 
   return (
@@ -353,6 +679,11 @@ export default function PokerChallengePage() {
             </TouchableOpacity>
           </View>
 
+          {/* Tier label */}
+          <View style={s.tierBar}>
+            <Text style={s.tierBarText}>{gs.currentTier} · Level {gs.level}</Text>
+          </View>
+
           {/* Header */}
           <ChallengeHeader
             level={gs.level}
@@ -360,10 +691,18 @@ export default function PokerChallengePage() {
             pointsRequired={pointsRequired}
             title={currentTitle}
             streak={gs.stats.currentStreak}
+            currentTier={gs.currentTier}
           />
 
-          {/* Stats panel */}
-          <StatsPanel stats={gs.stats} level={gs.level} />
+          {/* Level select pips — shows for Beginner (1–5), Apprentice (6–10), Grinder (11–15) */}
+          {(gs.level <= 15) && (
+            <LevelSelectPanel
+              currentLevel={gs.level}
+              unlockedLevels={gs.unlockedLevels}
+              onSelect={handleLevelSelect}
+              currentTier={gs.currentTier}
+            />
+          )}
 
           {gs.grandChampionUnlocked && (
             <View style={s.championBanner}>
@@ -373,44 +712,84 @@ export default function PokerChallengePage() {
 
           <View style={s.divider} />
 
-          {/* Challenge label + question */}}
+          {/* Challenge label + question */}
           <View style={s.section}>
-            <Text style={s.sectionLabel}>Challenge #{gs.handsCompleted + 1}</Text>
-            <QuestionPanel
-              scenario={challenge.scenario}
-              explanation={challenge.explanation}
-              showExplanation={showExplanation}
-            />
+            <Text style={s.sectionLabel}>
+              Challenge #{gs.handsCompleted + 1}
+              {'  ·  '}{gs.sessionTotal + 1}{' / '}{SESSION_LENGTH}
+            </Text>
+
+            {/* Action questions: scenario text + full hand display */}
+            {challenge.category === 'action' && (
+              <>
+                <QuestionPanel
+                  scenario={challenge.scenario}
+                  explanation={challenge.explanation}
+                  showExplanation={showExplanation}
+                  tag={challenge.panelTitle}
+                />
+                {challenge.heroHand && challenge.villainHand && challenge.runout ? (
+                  <HandDisplay
+                    heroHand={challenge.heroHand}
+                    villainHand={challenge.villainHand}
+                    villainRevealed={showVillainCards}
+                    runout={challenge.runout}
+                    showFlop={showFlop}
+                    showTurn={showTurn}
+                    showRiver={showRiver}
+                  />
+                ) : null}
+              </>
+            )}
+
+            {/* Outs questions: question text + parsed card display */}
+            {challenge.category === 'outs' && (
+              <>
+                <QuestionPanel
+                  scenario={challenge.scenario}
+                  explanation={challenge.explanation}
+                  showExplanation={showExplanation}
+                  tag={challenge.panelTitle}
+                />
+                <OutsCardDisplay
+                  heroCards={challenge.heroCards}
+                  boardCards={challenge.boardCards}
+                />
+              </>
+            )}
+
+            {/* EV / pot-odds questions: math prompt only */}
+            {challenge.category === 'ev' && (
+              <QuestionPanel
+                scenario={challenge.scenario}
+                explanation={challenge.explanation}
+                showExplanation={showExplanation}
+                tag={challenge.panelTitle}
+              />
+            )}
           </View>
 
-          {/* Cards â€” only render when card data exists */}
-          {challenge.heroHand && challenge.villainHand && challenge.runout ? (
-            <HandDisplay
-              heroHand={challenge.heroHand}
-              villainHand={challenge.villainHand}
-              villainRevealed={showVillainCards}
-              runout={challenge.runout}
-              showFlop={showFlop}
-              showTurn={showTurn}
-              showRiver={showRiver}
-            />
-          ) : (
-            <View style={s.noCardsWrap}>
-              <Text style={s.noCardsText}>No card runout for this question type.</Text>
-            </View>
-          )}
 
-          {/* Correctness banner â€” springs in after answer */}
+          {/* Correctness banner — springs in after answer */}
           <ResultBanner result={showCorrectness ? gs.lastResultType : null} />
 
           {/* Decision buttons (disabled once locked) or Continue panel */}
           {!canContinue ? (
-            <DecisionButtons
-              options={challenge.answerOptions}
-              onSelect={handleAnswer}
-              disabled={buttonsLocked}
-              selected={gs.selectedAnswer}
-            />
+            challenge.category === 'action' ? (
+              <DecisionButtons
+                options={challenge.answerOptions}
+                onSelect={handleAnswer}
+                disabled={buttonsLocked}
+                selected={gs.selectedAnswer}
+              />
+            ) : (
+              <MultiChoiceButtons
+                options={challenge.answerOptions}
+                onSelect={handleAnswer}
+                disabled={buttonsLocked}
+                selected={gs.selectedAnswer}
+              />
+            )
           ) : (
             <ContinuePanel
               scoreDelta={gs.lastScoreDelta}
@@ -421,12 +800,9 @@ export default function PokerChallengePage() {
             />
           )}
 
+          {/* Stats — repositioned below questions so gameplay stays the visual focus */}
           <View style={s.divider} />
-
-          {/* Score rules */}
-          <View style={s.section}>
-            <ScoreRulesPanel scoreTable={SCORE_TABLE} />
-          </View>
+          <StatsPanel stats={gs.stats} level={gs.level} />
 
           {/* Guest upsell â€” only on level 4+ */}
           {showGuestPromo && (
@@ -452,6 +828,25 @@ export default function PokerChallengePage() {
           onDone={() => setDeltaPop(prev => ({ ...prev, show: false }))}
         />
       </View>
+
+      <SessionSummaryModal
+        visible={gs.sessionComplete}
+        level={gs.level}
+        sessionCorrect={gs.sessionCorrect}
+        sessionLength={SESSION_LENGTH}
+        passed={gs.sessionCorrect / SESSION_LENGTH >= SESSION_PASS_THRESHOLD}
+        onRetry={handleRetrySession}
+        onNext={handleAdvanceLevel}
+      />
+
+      <TierCompleteModal
+        visible={gs.tierComplete}
+        tier={gs.currentTier}
+        level={gs.level}
+        nextTier={getNextTier(gs.currentTier)}
+        onContinue={handleTierContinue}
+        onReplay={handleTierReplay}
+      />
 
       <WheelModal visible={gs.wheelPending} onResult={handleWheelResult} />
 
@@ -505,7 +900,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
     overflow: 'hidden',
-    paddingBottom: 8,
+    paddingBottom: 20,
   },
   modeBar: {
     flexDirection: 'row',
@@ -520,8 +915,22 @@ const s = StyleSheet.create({
   modeLabel:      { color: T.muted, fontSize: 11, fontWeight: '600' },
   resetText:      { color: T.gold, fontSize: 11, fontWeight: '700' },
   divider:        { height: 1, backgroundColor: 'rgba(255,255,255,0.07)', marginHorizontal: 16 },
-  section:        { paddingHorizontal: 16, paddingVertical: 12 },
-  sectionLabel:   { color: T.muted, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginBottom: 6, textTransform: 'uppercase' },
+  tierBar: {
+    paddingHorizontal: 14,
+    paddingVertical:   6,
+    alignItems:        'center',
+    backgroundColor:   'rgba(255,255,255,0.02)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  tierBarText: {
+    color:         T.gold,
+    fontSize:      9,
+    fontWeight:    '700',
+    letterSpacing: 3.5,
+  },
+  section:        { paddingHorizontal: 16, paddingVertical: 8 },
+  sectionLabel:   { color: T.muted, fontSize: 12, fontWeight: '600', letterSpacing: 0.4, marginBottom: 8 },
   championBanner: {
     marginHorizontal: 16,
     marginVertical: 10,

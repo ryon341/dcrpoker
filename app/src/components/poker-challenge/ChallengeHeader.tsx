@@ -8,9 +8,11 @@ interface Props {
   pointsRequired: number;
   title: string;
   streak: number;
+  /** Current tier name, e.g. 'Beginner', 'Apprentice'. Shown as "{tier} · Level {level}". */
+  currentTier?: string;
 }
 
-export function ChallengeHeader({ level, points, pointsRequired, title, streak }: Props) {
+export function ChallengeHeader({ level, points, pointsRequired, title, streak, currentTier }: Props) {
   const router = useRouter();
   const progress = Math.min(points / pointsRequired, 1);
 
@@ -20,7 +22,12 @@ export function ChallengeHeader({ level, points, pointsRequired, title, streak }
       <View style={s.topRow}>
         <View style={s.levelWrap}>
           <Image source={require('../../../assets/level-badge.png')} style={s.badge} resizeMode="contain" />
-          <Text style={s.levelText}>LVL {level}</Text>
+          <View>
+            <Text style={s.levelText}>LVL {level}</Text>
+            {currentTier && (
+              <Text style={s.tierLevelLabel}>{currentTier} · Level {level}</Text>
+            )}
+          </View>
         </View>
         <View style={s.titleStreakWrap}>
           <Text style={s.titleText}>{title}</Text>
@@ -57,6 +64,7 @@ const s = StyleSheet.create({
   levelWrap:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge:           { width: 32, height: 32 },
   levelText:       { color: T.gold, fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
+  tierLevelLabel:  { color: T.muted, fontSize: 9, fontWeight: '600', letterSpacing: 0.8, marginTop: 1 },
   titleStreakWrap:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titleText:       { color: T.muted, fontSize: 11, fontWeight: '600' },
   streakText:      { color: T.white, fontSize: 12, fontWeight: '700' },

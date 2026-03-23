@@ -13,3 +13,6 @@ Thumbs.db
 # IDE
 .vscode/
 *.code-workspace
+
+# large exports
+*.zip

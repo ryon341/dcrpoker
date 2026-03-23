@@ -33,4 +33,6 @@ export type ChallengeQuestion = {
   tags: string[];
   /** 1–100 relative difficulty score within the tier */
   difficultyScore: number;
+  /** Source tier: 'apprentice' indicates native content; 'beginner' indicates carryover from Tier 1 */
+  sourceTier?: ChallengeTier;
 };
