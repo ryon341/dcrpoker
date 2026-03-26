@@ -114,7 +114,7 @@ export default function GearPage() {
       : CHIP_PRODUCTS.filter(p => p.tier === tierFilter);
 
   return (
-    <>
+    <View style={s.wrapper}>
       <AdInterstitial visible={showAd} onDismiss={markAdShown} storageKey="gear" />
       <ScrollView style={s.container} contentContainerStyle={s.content}>
       <Text style={s.heading}>Gear</Text>
@@ -164,7 +164,7 @@ export default function GearPage() {
         Links above are Amazon affiliate links. DCR Poker may earn a small commission at no extra cost to you. We only recommend products we'd use ourselves.
       </Text>
     </ScrollView>
-    </>
+    </View>
   );
 }
 
@@ -172,6 +172,7 @@ export default function GearPage() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
+  wrapper:   { flex: 1, backgroundColor: '#1a1a2e' },
   content:   { padding: 20, paddingBottom: 48 },
 
   heading: {

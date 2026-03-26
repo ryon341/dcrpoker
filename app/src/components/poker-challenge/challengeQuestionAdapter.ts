@@ -25,9 +25,11 @@ export type RuntimeChallenge = {
 const ACTION_OPTIONS = ['FOLD', 'CALL', 'RAISE'];
 
 const PANEL_TITLES: Record<ChallengeQuestion['category'], string> = {
-  action: 'GTO SCENARIO',
-  outs:   'OUTS',
-  ev:     'POT ODDS',
+  action:   'GTO SCENARIO',
+  outs:     'OUTS',
+  ev:       'POT ODDS',
+  position: 'POSITION',
+  pressure: 'PRESSURE SPOT',
 };
 
 function normalize(text: string): string {

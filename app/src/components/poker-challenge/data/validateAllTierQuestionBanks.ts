@@ -9,16 +9,16 @@ const EXPECTED_TIER_INDEX: Record<ChallengeTier, 1 | 2 | 3 | 4 | 5> = {
   chip_leader: 4,
   master: 5,
 };
-const CATEGORIES: ChallengeCategory[] = ['action', 'outs', 'ev'];
+const CATEGORIES: ChallengeCategory[] = ['action', 'outs', 'ev', 'position', 'pressure'];
 const EXPECTED_CATEGORY_DISTRIBUTION: Record<
   ChallengeTier,
-  { action: number; outs: number; ev: number }
+  { action: number; outs: number; ev: number; position: number; pressure: number }
 > = {
-  beginner: { action: 150, outs: 50, ev: 50 },
-  apprentice: { action: 150, outs: 50, ev: 50 },
-  grinder: { action: 150, outs: 62, ev: 38 },
-  chip_leader: { action: 150, outs: 62, ev: 38 },
-  master: { action: 150, outs: 62, ev: 38 },
+  beginner:    { action: 100, outs: 60, ev: 50, position: 40, pressure: 0 },
+  apprentice:  { action: 100, outs: 50, ev: 60, position: 40, pressure: 0 },
+  grinder:     { action: 90,  outs: 40, ev: 70, position: 0,  pressure: 50 },
+  chip_leader: { action: 80,  outs: 30, ev: 80, position: 0,  pressure: 60 },
+  master:      { action: 150, outs: 62, ev: 38, position: 0,  pressure: 0 },
 };
 
 export type AllBankValidationResult = {
@@ -113,7 +113,7 @@ export function validateAllTierQuestionBanks(): AllBankValidationResult {
     summaryLines.push(
       `Tier ${expectedTierIndex} (${tier}) total: ${questions.length}`,
       `Tier ${expectedTierIndex} levels: ${(byLevel['1'] ?? 0)}/${(byLevel['2'] ?? 0)}/${(byLevel['3'] ?? 0)}/${(byLevel['4'] ?? 0)}/${(byLevel['5'] ?? 0)}`,
-      `Tier ${expectedTierIndex} categories: action ${byCategory.action ?? 0}, outs ${byCategory.outs ?? 0}, ev ${byCategory.ev ?? 0}`,
+      `Tier ${expectedTierIndex} categories: action ${byCategory.action ?? 0}, outs ${byCategory.outs ?? 0}, ev ${byCategory.ev ?? 0}, position ${byCategory.position ?? 0}, pressure ${byCategory.pressure ?? 0}`,
     );
 
     for (const question of questions) {

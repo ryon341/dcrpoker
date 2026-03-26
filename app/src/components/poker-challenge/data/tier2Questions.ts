@@ -1,7 +1,6 @@
-﻿// TC084 — Tier 2 / Apprentice question bank re-export
-// The authoritative source is tier2ApprenticeQuestions.ts.
-// This file keeps the legacy export name for backward compatibility.
+﻿// TC092 — Tier 2 / Apprentice: now sources from the auto-generated bank (TC090.5).
+// The hand-authored bank (tier2ApprenticeQuestions) is retained for reference.
 import type { ChallengeQuestion } from '../challengeQuestionTypes';
-import { tier2ApprenticeQuestions } from './tier2ApprenticeQuestions';
+import { generatedApprenticeQuestions } from './generated/generatedApprenticeQuestions';
 
-export const tier2Questions: ChallengeQuestion[] = tier2ApprenticeQuestions;
+export const tier2Questions: ChallengeQuestion[] = generatedApprenticeQuestions;

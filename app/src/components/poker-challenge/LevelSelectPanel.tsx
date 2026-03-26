@@ -12,9 +12,11 @@ type Props = {
 };
 
 const TIER_LEVELS: Record<string, number[]> = {
-  Beginner:     [1, 2, 3, 4, 5],
-  Apprentice:   [6, 7, 8, 9, 10],
-  Grinder:      [11, 12, 13, 14, 15],
+  Beginner:      [1, 2, 3, 4, 5],
+  Apprentice:    [6, 7, 8, 9, 10],
+  Grinder:       [11, 12, 13, 14, 15],
+  'Chip Leader': [16, 17, 18, 19, 20],
+  Master:        [21, 22, 23, 24, 25],
 };
 
 export function LevelSelectPanel({ currentLevel, unlockedLevels, onSelect, currentTier = 'Beginner' }: Props) {

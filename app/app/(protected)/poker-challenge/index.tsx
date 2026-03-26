@@ -17,8 +17,9 @@ import { LevelCompleteModal }   from '../../../src/components/poker-challenge/Le
 import { LoginGateModal }       from '../../../src/components/poker-challenge/LoginGateModal';
 import { SessionSummaryModal }  from '../../../src/components/poker-challenge/SessionSummaryModal';
 import { TierCompleteModal }    from '../../../src/components/poker-challenge/TierCompleteModal';
+import { GrandChampionModal }   from '../../../src/components/poker-challenge/GrandChampionModal';
 import { LevelSelectPanel }     from '../../../src/components/poker-challenge/LevelSelectPanel';
-import { getNextChallenge, buildSessionPool, getQuestionById } from '../../../src/components/poker-challenge/challengeSelector';
+import { getNextChallenge, buildSessionPool, getQuestionById, getGauntletQuestion } from '../../../src/components/poker-challenge/challengeSelector';
 import { getScoreDelta, applyScore, getPointsRequired, MAX_CHALLENGE_LEVEL } from '../../../src/components/poker-challenge/scoring';
 import { StatsPanel }          from '../../../src/components/poker-challenge/StatsPanel';
 import { getInitialStats, applyHandStats, applyWheelStats, applyLevelProgress } from '../../../src/components/poker-challenge/stats';
@@ -32,6 +33,7 @@ import { PostAuthResumeBanner } from '../../../src/components/poker-challenge/Po
 import { playSound } from '../../../src/components/poker-challenge/gameAudio';
 import { triggerTapHaptic, triggerCorrectHaptic, triggerIncorrectHaptic } from '../../../src/components/poker-challenge/gameHaptics';
 import type { PokerChallengeProgress } from '../../../src/components/poker-challenge/progressStorage';
+import { recordChallengeQuestionEvent } from '../../../src/components/poker-challenge/challengeAnalyticsStorage';
 import {
   adaptQuestionToRuntime,
   isRuntimeAnswerCorrect,
@@ -80,9 +82,24 @@ function safeAdaptFromPool(level: number, ids: string[], idx: number): RuntimeCh
   return safeAdapt(level, []);
 }
 
+/**
+ * Adapt a gauntlet question to RuntimeChallenge, retrying on malformed questions.
+ */
+function safeGauntletAdapt(history: string[]): RuntimeChallenge {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const q  = getGauntletQuestion(history);
+    const rt = adaptQuestionToRuntime(q);
+    if (rt) return rt;
+    history = [...history, q.id];
+  }
+  return safeAdapt(MAX_CHALLENGE_LEVEL, []);
+}
+
 const MAX_GUEST_LEVEL = 5;
 /** Number of questions per level play session. */
 const SESSION_LENGTH  = 12;
+/** Number of questions per Elite Gauntlet run (TC095). */
+const GAUNTLET_LENGTH = 25;
 /** Minimum fraction correct to pass a session and unlock the next level. */
 const SESSION_PASS_THRESHOLD = 0.7;
 
@@ -135,6 +152,12 @@ interface GameState {
   completedTiers: string[];
   /** True while the tier-complete modal should be visible. Cleared on any navigation. */
   tierComplete: boolean;
+  /** True when the Grand Champion reward modal should be visible. */
+  grandChampionModal: boolean;
+  /** 'challenge' = normal progression; 'gauntlet' = Elite Gauntlet mode (TC095). */
+  mode: 'challenge' | 'gauntlet';
+  /** History of question IDs served during the current gauntlet run. */
+  gauntletHistory: string[];
 }
 
 function makeInitialState(): GameState {
@@ -162,7 +185,10 @@ function makeInitialState(): GameState {
     currentTier:    'Beginner',
     unlockedTiers:  ['Beginner'],
     completedTiers: [],
-    tierComplete:   false,
+    tierComplete:      false,
+    grandChampionModal: false,
+    mode:               'challenge',
+    gauntletHistory:    [],
   };
 }
 
@@ -188,6 +214,16 @@ export default function PokerChallengePage() {
 
   // Cancel timers on unmount
   useEffect(() => () => cancelTimers(), []);
+
+  // Dev-only: validate all generated question banks once on mount (TC096)
+  useEffect(() => {
+    if (__DEV__) {
+      import('../../../src/components/poker-challenge/challengeBankValidationReport')
+        .then(({ printChallengeBankReport }) => printChallengeBankReport())
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Restore saved progress once auth + storage resolve
   useEffect(() => {
@@ -373,6 +409,19 @@ export default function PokerChallengePage() {
     cancelTimers();
     scheduleReveal(delta, isCorrect, handOutcomeForUi);
     saveProgress(snap(next));
+    // Analytics — fire-and-forget (TC096)
+    recordChallengeQuestionEvent({
+      questionId:     challenge.id,
+      tier:           gs.mode === 'gauntlet' ? 'gauntlet' : gs.currentTier,
+      level:          gs.mode === 'gauntlet' ? 0 : gs.level,
+      category:       challenge.category,
+      correct:        isCorrect,
+      selectedAnswer: answer,
+      correctAnswer:  challenge.correctAnswer,
+      scoreDelta:     delta,
+      mode:           gs.mode,
+      timestamp:      new Date().toISOString(),
+    }).catch(() => {});
   }
 
   function handleContinue() {
@@ -383,9 +432,54 @@ export default function PokerChallengePage() {
     setRevealPhase(0);
     setDeltaPop({ value: 0, show: false });
 
-    const newHands       = gs.handsCompleted + 1;
+    const newHands        = gs.handsCompleted + 1;
     const newSessionTotal = gs.sessionTotal + 1;
-    const newHistory     = [...gs.challengeHistory.slice(-15), gs.currentChallenge.id];
+    const newHistory      = [...gs.challengeHistory.slice(-15), gs.currentChallenge.id];
+
+    // ── Elite Gauntlet mode ──────────────────────────────────────────────────────────────────────
+    if (gs.mode === 'gauntlet') {
+      const newGauntletHistory = [...gs.gauntletHistory, gs.currentChallenge.id];
+      if (newSessionTotal >= GAUNTLET_LENGTH) {
+        // Gauntlet run complete — re-show Grand Champion modal
+        const next: GameState = {
+          ...gs,
+          handsCompleted:     newHands,
+          challengeHistory:   newHistory,
+          gauntletHistory:    newGauntletHistory,
+          selectedAnswer:     null,
+          lastScoreDelta:     0,
+          lastResultType:     null,
+          wheelPending:       false,
+          levelComplete:      false,
+          sessionTotal:       newSessionTotal,
+          sessionComplete:    false,
+          tierComplete:       false,
+          grandChampionModal: true,
+          mode:               'challenge',
+        };
+        setGs(next);
+        saveProgress(snap(next));
+        return;
+      }
+      // Continue gauntlet — pick next weighted question
+      const nextChallenge = safeGauntletAdapt(newGauntletHistory);
+      const next: GameState = {
+        ...gs,
+        handsCompleted:   newHands,
+        currentChallenge: nextChallenge,
+        challengeHistory: newHistory,
+        gauntletHistory:  newGauntletHistory,
+        selectedAnswer:   null,
+        lastScoreDelta:   0,
+        lastResultType:   null,
+        wheelPending:     false,
+        levelComplete:    false,
+        sessionTotal:     newSessionTotal,
+      };
+      setGs(next);
+      saveProgress(snap(next));
+      return;
+    }
 
     if (newSessionTotal >= SESSION_LENGTH) {
       // ── Session complete ────────────────────────────────────────────────────────────
@@ -465,18 +559,24 @@ export default function PokerChallengePage() {
 
   function handleAdvanceLevel() {
     if (gs.level >= MAX_CHALLENGE_LEVEL) {
+      const now = new Date().toISOString();
       const next: GameState = {
         ...gs,
         level: MAX_CHALLENGE_LEVEL,
         levelComplete: false,
         grandChampionUnlocked: true,
+        grandChampionModal: true,
         tierComplete:   false,
         sessionCorrect: 0,
         sessionTotal: 0,
         sessionComplete: false,
       };
       setGs(next);
-      saveProgress(snap(next, { grandChampionUnlocked: true }));
+      saveProgress(snap(next, {
+        grandChampionUnlocked:  true,
+        hasCompletedChallenge:  true,
+        grandChampionAchievedAt: now,
+      }));
       return;
     }
 
@@ -604,6 +704,7 @@ export default function PokerChallengePage() {
         tierComplete:          false,
         levelComplete:         false,
         grandChampionUnlocked: true,
+        grandChampionModal:    true,
       };
       setGs(next);
       saveProgress(snap(next, { grandChampionUnlocked: true }));
@@ -658,6 +759,95 @@ export default function PokerChallengePage() {
     saveProgress(snap(next));
   }
 
+  // ── Grand Champion handlers ───────────────────────────────────────────────
+
+  function handleGrandChampionClose() {
+    setGs(prev => ({ ...prev, grandChampionModal: false }));
+  }
+
+  function handleGrandChampionReplayFinalLevel() {
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const newPool = buildSessionPool(MAX_CHALLENGE_LEVEL, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      grandChampionModal:   false,
+      tierComplete:         false,
+      sessionComplete:      false,
+      levelComplete:        false,
+      wheelPending:         false,
+      currentChallenge:     safeAdaptFromPool(MAX_CHALLENGE_LEVEL, newPool, 0),
+      challengeHistory:     [],
+      selectedAnswer:       null,
+      lastScoreDelta:       0,
+      lastResultType:       null,
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
+  function handleGrandChampionReplayTier() {
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const masterStartLevel = 21;
+    const newPool = buildSessionPool(masterStartLevel, SESSION_LENGTH);
+    const next: GameState = {
+      ...gs,
+      grandChampionModal:   false,
+      tierComplete:         false,
+      sessionComplete:      false,
+      levelComplete:        false,
+      wheelPending:         false,
+      level:                masterStartLevel,
+      currentTier:          getTierForLevel(masterStartLevel),
+      currentChallenge:     safeAdaptFromPool(masterStartLevel, newPool, 0),
+      challengeHistory:     [],
+      selectedAnswer:       null,
+      lastScoreDelta:       0,
+      lastResultType:       null,
+      sessionCorrect:       0,
+      sessionTotal:         0,
+      sessionQuestionIds:   newPool,
+      sessionQuestionIndex: 0,
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
+  // ── Elite Gauntlet handler (TC095) ────────────────────────────────────────────────────────────
+
+  function handleStartGauntlet() {
+    cancelTimers();
+    setRevealPhase(0);
+    setDeltaPop({ value: 0, show: false });
+    const firstChallenge = safeGauntletAdapt([]);
+    const next: GameState = {
+      ...gs,
+      mode:               'gauntlet',
+      grandChampionModal: false,
+      currentChallenge:   firstChallenge,
+      challengeHistory:   [],
+      gauntletHistory:    [firstChallenge.id],
+      selectedAnswer:     null,
+      lastScoreDelta:     0,
+      lastResultType:     null,
+      sessionCorrect:     0,
+      sessionTotal:       0,
+      sessionComplete:    false,
+      wheelPending:       false,
+      levelComplete:      false,
+      tierComplete:       false,
+    };
+    setGs(next);
+    saveProgress(snap(next));
+  }
+
   return (
     <ImageBackground
       source={require('../../../assets/asset01.jpg')}
@@ -679,9 +869,13 @@ export default function PokerChallengePage() {
             </TouchableOpacity>
           </View>
 
-          {/* Tier label */}
+          {/* Tier label — shows gauntlet progress in Elite Gauntlet mode */}
           <View style={s.tierBar}>
-            <Text style={s.tierBarText}>{gs.currentTier} · Level {gs.level}</Text>
+            <Text style={s.tierBarText}>
+              {gs.mode === 'gauntlet'
+                ? `⚔️ Elite Gauntlet · ${gs.sessionTotal + 1} / ${GAUNTLET_LENGTH}`
+                : `${gs.currentTier} · Level ${gs.level}`}
+            </Text>
           </View>
 
           {/* Header */}
@@ -694,8 +888,8 @@ export default function PokerChallengePage() {
             currentTier={gs.currentTier}
           />
 
-          {/* Level select pips — shows for Beginner (1–5), Apprentice (6–10), Grinder (11–15) */}
-          {(gs.level <= 15) && (
+          {/* Level select pips — shows for all tiers (1–25) */}
+          {(gs.level <= 25) && (
             <LevelSelectPanel
               currentLevel={gs.level}
               unlockedLevels={gs.unlockedLevels}
@@ -706,7 +900,10 @@ export default function PokerChallengePage() {
 
           {gs.grandChampionUnlocked && (
             <View style={s.championBanner}>
-              <Text style={s.championBannerText}>🏆 Grand Champion Unlocked</Text>
+              <Text style={s.championBannerText}>🏆 Grand Champion</Text>
+              <TouchableOpacity onPress={handleStartGauntlet} style={s.gauntletBannerBtn}>
+                <Text style={s.gauntletBannerBtnText}>⚔️ Elite Gauntlet</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -715,8 +912,9 @@ export default function PokerChallengePage() {
           {/* Challenge label + question */}
           <View style={s.section}>
             <Text style={s.sectionLabel}>
-              Challenge #{gs.handsCompleted + 1}
-              {'  ·  '}{gs.sessionTotal + 1}{' / '}{SESSION_LENGTH}
+              {gs.mode === 'gauntlet'
+                ? `Gauntlet Q${gs.sessionTotal + 1} / ${GAUNTLET_LENGTH}`
+                : `Challenge #${gs.handsCompleted + 1}  ·  ${gs.sessionTotal + 1} / ${SESSION_LENGTH}`}
             </Text>
 
             {/* Action questions: scenario text + full hand display */}
@@ -760,6 +958,16 @@ export default function PokerChallengePage() {
 
             {/* EV / pot-odds questions: math prompt only */}
             {challenge.category === 'ev' && (
+              <QuestionPanel
+                scenario={challenge.scenario}
+                explanation={challenge.explanation}
+                showExplanation={showExplanation}
+                tag={challenge.panelTitle}
+              />
+            )}
+
+            {/* Position / pressure questions: question text only */}
+            {(challenge.category === 'position' || challenge.category === 'pressure') && (
               <QuestionPanel
                 scenario={challenge.scenario}
                 explanation={challenge.explanation}
@@ -869,6 +1077,22 @@ export default function PokerChallengePage() {
         onClose={() => setGs(prev => ({ ...prev, loginRequiredForNextLevel: false }))}
       />
 
+      <GrandChampionModal
+        visible={gs.grandChampionModal}
+        onClose={handleGrandChampionClose}
+        onReplayFinalLevel={handleGrandChampionReplayFinalLevel}
+        onReplayTier={handleGrandChampionReplayTier}
+        onRestartChallenge={handleStartOver}
+        onGauntlet={handleStartGauntlet}
+        finalScore={gs.score}
+        accuracy={
+          gs.stats.totalHandsPlayed > 0
+            ? Math.round((gs.stats.totalCorrect / gs.stats.totalHandsPlayed) * 100)
+            : undefined
+        }
+        bestStreak={gs.stats.bestStreak > 0 ? gs.stats.bestStreak : undefined}
+      />
+
       <AdBreakModal
         visible={showEntryAd}
         variant="main"
@@ -935,13 +1159,23 @@ const s = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 10,
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(251,191,36,0.35)',
     backgroundColor: 'rgba(251,191,36,0.10)',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   championBannerText: { color: T.gold, fontSize: 12, fontWeight: '800', letterSpacing: 0.6 },
+  gauntletBannerBtn: {
+    backgroundColor: T.gold,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  gauntletBannerBtnText: { color: '#0c0a08', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
   guestPromoWrap: {
     marginHorizontal: 16,
     marginTop: 4,

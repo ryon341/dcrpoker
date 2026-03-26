@@ -26,7 +26,7 @@ export default function ArcadeHubScreen() {
   const { showAd, markAdShown } = useAdGate('arcade');
 
   return (
-    <>
+    <View style={s.wrapper}>
       <AdInterstitial
         visible={showAd}
         onDismiss={markAdShown}
@@ -62,11 +62,12 @@ export default function ArcadeHubScreen() {
           returnTo="/(protected)/arcade"
         />
       </ScrollView>
-    </>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
+  wrapper:         { flex: 1, backgroundColor: T.bg },
   container:       { flex: 1, backgroundColor: T.bg },
   content:         { padding: 20, paddingBottom: 48 },
   header:          { marginBottom: 20 },

@@ -30,6 +30,10 @@ export type PokerChallengeProgress = {
   unlockedTiers?: string[];
   /** Tier names where all 5 levels have been passed at least once. */
   completedTiers?: string[];
+  /** Set to true the first time Level 25 is completed. */
+  hasCompletedChallenge?: boolean;
+  /** ISO timestamp of when Level 25 was first beaten. */
+  grandChampionAchievedAt?: string;
 };
 
 const PROGRESS_SCHEMA_VERSION = 2;
@@ -114,6 +118,10 @@ function normalizeProgress(raw: Partial<PokerChallengeProgress>): PokerChallenge
     completedTiers: Array.isArray(raw.completedTiers)
       ? raw.completedTiers.filter((t): t is string => typeof t === 'string' && t.length > 0)
       : [],
+    hasCompletedChallenge: !!raw.hasCompletedChallenge,
+    grandChampionAchievedAt: typeof raw.grandChampionAchievedAt === 'string'
+      ? raw.grandChampionAchievedAt
+      : undefined,
   };
 }
 

@@ -354,25 +354,111 @@ const level5EvSeeds: MathSeed[] = [
   { prompt: 'Pot is $69 and call is $23. Required equity?', choices: ['20%', '25%', '30%', '33%'], correctAnswer: '25%', explanation: '23/92 = 25%.', tags: ['l5', 'ev', 'pot-odds'], difficultyScore: 54 },
 ];
 
+// ─── TC090: Extra outs seeds (2 per level → 60 total outs) ───────────────────
+
+const level1ExtraOutsSeeds: MathSeed[] = [
+  { prompt: 'You hold As Ks on Qs Js 2d. How many flush outs remain?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: '4 spades seen (As, Ks in hand + Qs, Js on board). 13-4 = 9 flush outs remain.', tags: ['l1', 'outs', 'flush-draw'], difficultyScore: 12 },
+  { prompt: 'You hold 5s 6s on 4d 3c Ah. How many outs complete your straight?', choices: ['4', '6', '8', '10'], correctAnswer: '8', explanation: 'Any 2 makes a straight (A-2-3-4-5); any 7 makes 3-4-5-6-7. 8 total outs.', tags: ['l1', 'outs', 'oesd'], difficultyScore: 13 },
+];
+
+const level2ExtraOutsSeeds: MathSeed[] = [
+  { prompt: 'You hold Kh Qh on Jh Th 4d. How many flush outs remain?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: '4 hearts seen (Kh, Qh in hand + Jh, Th on board). 13-4 = 9 flush outs remain.', tags: ['l2', 'outs', 'flush-draw'], difficultyScore: 22 },
+  { prompt: 'You hold 3d 3c on Ah Kd 2s. How many outs give you trips on the turn?', choices: ['1', '2', '3', '4'], correctAnswer: '2', explanation: 'Two threes remain in the deck.', tags: ['l2', 'outs', 'pair-to-trips'], difficultyScore: 22 },
+];
+
+const level3ExtraOutsSeeds: MathSeed[] = [
+  { prompt: 'You hold 5c 6c on 3c 4c Kd. How many total outs (flush + straight, no double-count)?', choices: ['12', '13', '15', '17'], correctAnswer: '15', explanation: '9 club flush outs + 8 straight outs (2 or 7) - 2 overlap (2c, 7c) = 15.', tags: ['l3', 'outs', 'combo-draw'], difficultyScore: 34 },
+  { prompt: 'You hold Td Jd on 8d 9d 3c. How many flush outs remain?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: '4 diamonds seen (Td, Jd in hand + 8d, 9d on board). 13-4 = 9 flush outs.', tags: ['l3', 'outs', 'flush-draw'], difficultyScore: 32 },
+];
+
+const level4ExtraOutsSeeds: MathSeed[] = [
+  { prompt: 'You hold 7h 8h on 5h 6h Kd. How many total outs (flush + straight, no double-count)?', choices: ['12', '13', '15', '17'], correctAnswer: '15', explanation: '9 heart flush outs + 8 straight outs (4 or 9) - 2 overlap (4h, 9h) = 15.', tags: ['l4', 'outs', 'combo-draw'], difficultyScore: 44 },
+  { prompt: 'You hold Js Qs on Ks As 4d. How many flush outs remain?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: '4 spades seen (Js, Qs in hand + Ks, As on board). 13-4 = 9 flush outs.', tags: ['l4', 'outs', 'flush-draw'], difficultyScore: 42 },
+];
+
+const level5ExtraOutsSeeds: MathSeed[] = [
+  { prompt: 'You hold Tc Jc on 8c 9c 4h. How many total outs (flush + straight, no double-count)?', choices: ['12', '13', '15', '17'], correctAnswer: '15', explanation: '9 club flush outs + 8 straight outs (7 or Q) - 2 overlap (7c, Qc) = 15.', tags: ['l5', 'outs', 'combo-draw'], difficultyScore: 54 },
+  { prompt: 'You hold As Ks on Qs Js 7d. How many flush outs remain?', choices: ['7', '8', '9', '10'], correctAnswer: '9', explanation: '4 spades seen. 13-4 = 9 flush outs remaining.', tags: ['l5', 'outs', 'flush-draw'], difficultyScore: 52 },
+];
+
+// ─── TC090: Position seeds (8 per level → 40 total position) ─────────────────
+
+const level1PositionSeeds: MathSeed[] = [
+  { prompt: 'In 6-max poker, which pre-flop position requires the tightest starting hand range?', choices: ['Button', 'Cutoff', 'Under the Gun', 'Small Blind'], correctAnswer: 'Under the Gun', explanation: 'UTG acts first pre-flop among 6 players, facing the most opponents still to act, so it requires the tightest range.', tags: ['l1', 'position', 'concept'], difficultyScore: 12 },
+  { prompt: '6-max cash, 100bb. Folded to you UTG with J5o. Best play?', choices: ['Fold', 'Raise', 'Limp', 'Call'], correctAnswer: 'Fold', explanation: 'J5o is far too weak to open from UTG. Early position demands a tight range of strong hands.', tags: ['l1', 'position', 'utg-fold'], difficultyScore: 11 },
+  { prompt: '6-max cash, 100bb. Folded to you BTN with 97o. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Check'], correctAnswer: 'Raise', explanation: 'From the BTN you have position on all opponents post-flop, making 97o a profitable open raise.', tags: ['l1', 'position', 'btn-open'], difficultyScore: 12 },
+  { prompt: 'What is the primary benefit of being "in position" post-flop?', choices: ['You act first', 'You act last with full information', 'You see opponent cards', 'You pay no blinds'], correctAnswer: 'You act last with full information', explanation: 'Acting last on every post-flop street lets you make decisions with maximum information.', tags: ['l1', 'position', 'concept'], difficultyScore: 13 },
+  { prompt: '6-max cash, 100bb. BTN opens 2.5bb. You are SB with 83o. Best play?', choices: ['Call', 'Raise', 'Fold', 'Limp'], correctAnswer: 'Fold', explanation: '83o is too weak to defend from the SB vs a BTN open. Fold and wait for a better spot.', tags: ['l1', 'position', 'sb-defense'], difficultyScore: 11 },
+  { prompt: '6-max cash, 100bb. Folded to you UTG with Q6o. Best play?', choices: ['Fold', 'Raise', 'Limp', 'Call'], correctAnswer: 'Fold', explanation: 'Q6o is too weak to open from UTG. Out-of-position equity with a weak hand bleeds chips.', tags: ['l1', 'position', 'utg-fold'], difficultyScore: 11 },
+  { prompt: '6-max cash, 100bb. Folded to you CO with 55. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Check'], correctAnswer: 'Raise', explanation: '55 is a profitable CO open. Position and set-mining potential make it a raise.', tags: ['l1', 'position', 'co-open'], difficultyScore: 12 },
+  { prompt: '6-max cash, 100bb. BTN opens 2.5bb. SB folds. You are BB with T4o. Best play?', choices: ['Call', 'Raise', 'Fold', 'Check'], correctAnswer: 'Fold', explanation: 'T4o vs a BTN open gives you poor equity in the worst post-flop position. Fold.', tags: ['l1', 'position', 'bb-defense'], difficultyScore: 12 },
+];
+
+const level2PositionSeeds: MathSeed[] = [
+  { prompt: 'As you move from UTG to BTN in 6-max, your pre-flop opening range should...?', choices: ['Get tighter', 'Stay the same', 'Get wider', 'Depend only on card ranks'], correctAnswer: 'Get wider', explanation: 'Later seats face fewer opponents and enjoy post-flop position, so you can open more hands profitably.', tags: ['l2', 'position', 'concept'], difficultyScore: 21 },
+  { prompt: '6-max cash, 100bb. Folded to you MP with K6o. Best play?', choices: ['Raise', 'Limp', 'Fold', 'Call'], correctAnswer: 'Fold', explanation: 'K6o is below MP opening standards. Position discipline means folding weak hands from MP.', tags: ['l2', 'position', 'mp-fold'], difficultyScore: 21 },
+  { prompt: '6-max cash, 100bb. Folded to you CO with 76s. Best play?', choices: ['Fold', 'Limp only', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: '76s is a standard CO open. It has straight and flush potential with position.', tags: ['l2', 'position', 'co-open'], difficultyScore: 22 },
+  { prompt: '6-max cash, 100bb. CO opens 2.5bb. You are SB with J7o. Best play?', choices: ['Call', 'Raise', 'Fold', 'Limp'], correctAnswer: 'Fold', explanation: 'J7o vs CO open from SB is a clear fold. OOP with a marginal hand is a chip-spill.', tags: ['l2', 'position', 'sb-fold'], difficultyScore: 22 },
+  { prompt: 'Which 6-max seat is considered the most profitable to play from?', choices: ['Under the Gun', 'Middle Position', 'Small Blind', 'Button'], correctAnswer: 'Button', explanation: 'The BTN acts last on every post-flop street, providing consistent information advantage.', tags: ['l2', 'position', 'concept'], difficultyScore: 20 },
+  { prompt: '6-max cash, 100bb. Folded to you SB with A6o (BB only left). Best play?', choices: ['Fold', 'Limp', 'Raise', 'Check'], correctAnswer: 'Raise', explanation: 'A6o heads-up vs BB is a profitable steal attempt from the SB.', tags: ['l2', 'position', 'sb-steal'], difficultyScore: 23 },
+  { prompt: '6-max cash, 100bb. UTG opens. You are BB with 53o. Best play?', choices: ['Call', 'Raise', 'Fold', 'Limp'], correctAnswer: 'Fold', explanation: '53o vs a UTG open: too weak to defend. Poor equity and OOP on every street.', tags: ['l2', 'position', 'bb-fold'], difficultyScore: 22 },
+  { prompt: '6-max cash, 100bb. Folded to you BTN with T8o. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Check'], correctAnswer: 'Raise', explanation: 'T8o on the BTN is a profitable open. Post-flop position makes marginal hands playable.', tags: ['l2', 'position', 'btn-open'], difficultyScore: 23 },
+];
+
+const level3PositionSeeds: MathSeed[] = [
+  { prompt: 'Acting in position post-flop gives you which additional option?', choices: ['Mandatory bigger raise', 'Checking behind to control pot size', 'Seeing both hole cards first', 'Always last to bet pre-flop'], correctAnswer: 'Checking behind to control pot size', explanation: 'In position you can check behind on the turn to keep the pot small or take a free card.', tags: ['l3', 'position', 'concept'], difficultyScore: 31 },
+  { prompt: '6-max cash, 100bb. Folded to you UTG with KJo. Best play?', choices: ['Fold', 'Raise', 'Limp', 'Call'], correctAnswer: 'Raise', explanation: 'KJo is a marginal but profitable UTG open in 6-max. It plays well against defense ranges.', tags: ['l3', 'position', 'utg-open'], difficultyScore: 32 },
+  { prompt: '6-max cash, 100bb. HJ opens. You are BTN with Q4o. Best play?', choices: ['Call', '3-bet', 'Fold', 'Raise'], correctAnswer: 'Fold', explanation: 'Q4o vs HJ open from BTN is still a fold. Position helps, but not enough to rescue a weak hand.', tags: ['l3', 'position', 'btn-fold'], difficultyScore: 31 },
+  { prompt: '6-max cash, 100bb. Folded to you CO with K8s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'K8s is a standard CO open with flush potential and solid equity.', tags: ['l3', 'position', 'co-open'], difficultyScore: 32 },
+  { prompt: '6-max cash, 100bb. BTN opens. You are SB with 75s. Best play?', choices: ['Raise', '3-bet', 'Fold', 'Call'], correctAnswer: 'Fold', explanation: '75s from the SB vs BTN open is a fold. Being OOP all streets outweighs the speculative value.', tags: ['l3', 'position', 'sb-fold'], difficultyScore: 33 },
+  { prompt: 'Why should your opening range from UTG be much tighter than from BTN?', choices: ['Bigger blind investment', 'UTG faces 5 opponents and is OOP post-flop', 'Card rank is lower UTG', 'Rake difference'], correctAnswer: 'UTG faces 5 opponents and is OOP post-flop', explanation: 'UTG opens vs up to 5 opponents who can call and have position on UTG post-flop.', tags: ['l3', 'position', 'concept'], difficultyScore: 30 },
+  { prompt: '6-max cash, 100bb. Folded to you BTN with A2s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'A2s on BTN is a profitable open. Nut flush potential and position cover the weak kicker.', tags: ['l3', 'position', 'btn-open'], difficultyScore: 33 },
+  { prompt: '6-max cash, 100bb. UTG opens. You are MP with T9o. Best play?', choices: ['Call', 'Raise', 'Fold', 'Limp'], correctAnswer: 'Fold', explanation: 'T9o vs UTG open from MP: you will be OOP post-flop and dominated by UTG range.', tags: ['l3', 'position', 'mp-fold'], difficultyScore: 33 },
+];
+
+const level4PositionSeeds: MathSeed[] = [
+  { prompt: 'Being "out of position" (OOP) post-flop is a structural disadvantage because...?', choices: ['You pay more rake', 'You act first without seeing opponent response', 'Your cards are weaker', 'You cannot raise'], correctAnswer: 'You act first without seeing opponent response', explanation: 'Acting first forces you to bet or check without knowing what the in-position player will do.', tags: ['l4', 'position', 'concept'], difficultyScore: 41 },
+  { prompt: '6-max cash, 100bb. Folded to you MP with A7s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'A7s is a profitable MP open with strong flush equity and an ace.', tags: ['l4', 'position', 'mp-open'], difficultyScore: 41 },
+  { prompt: '6-max cash, 100bb. CO opens. You are BTN with J8o. Best play?', choices: ['Call', '3-bet', 'Raise', 'Fold'], correctAnswer: 'Fold', explanation: 'J8o vs CO open from BTN: not enough equity to call even in position vs a strong CO range.', tags: ['l4', 'position', 'btn-fold'], difficultyScore: 42 },
+  { prompt: '6-max cash, 100bb. Folded to you UTG with A8o. Best play?', choices: ['Fold', 'Raise', 'Limp', 'Call'], correctAnswer: 'Fold', explanation: 'A8o from UTG is too weak. It is dominated by many UTG calling/3-betting hands.', tags: ['l4', 'position', 'utg-fold'], difficultyScore: 42 },
+  { prompt: 'What makes the Small Blind the hardest position to play profitably?', choices: ['It costs 0.5bb', 'Acts last pre-flop but first on every post-flop street', 'Cannot 3-bet', 'Card discount applies'], correctAnswer: 'Acts last pre-flop but first on every post-flop street', explanation: 'SB acts last pre-flop (among blinds) but must act first on every post-flop street vs all opponents.', tags: ['l4', 'position', 'concept-sb'], difficultyScore: 41 },
+  { prompt: '6-max cash, 100bb. Folded to you CO with J9s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'J9s is a standard CO open with straight and flush draws and good post-flop playability.', tags: ['l4', 'position', 'co-open'], difficultyScore: 43 },
+  { prompt: '6-max cash, 100bb. BTN opens. SB folds. You are BB with Q6o. Best play?', choices: ['Raise', 'Call', 'Fold', 'Check'], correctAnswer: 'Fold', explanation: 'Q6o vs BTN open: poor equity and OOP post-flop. A losing defend even at the BB discount.', tags: ['l4', 'position', 'bb-fold'], difficultyScore: 43 },
+  { prompt: 'Being in position vs opponents allows you to...?', choices: ['Limp more hands', 'Bluff and value-bet more effectively', 'Fold your way to profit', 'Call all bets freely'], correctAnswer: 'Bluff and value-bet more effectively', explanation: 'Position lets you control pot size and bluff or value-bet with complete information.', tags: ['l4', 'position', 'concept'], difficultyScore: 44 },
+];
+
+const level5PositionSeeds: MathSeed[] = [
+  { prompt: '6-max cash, 100bb. Folded to you BTN with K4s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'K4s on BTN is profitable. Position and nut flush draws compensate for the weak kicker.', tags: ['l5', 'position', 'btn-open'], difficultyScore: 51 },
+  { prompt: '6-max cash, 100bb. UTG opens. You are CO with A8o. Best play?', choices: ['Call', '3-bet', 'Fold', 'Raise'], correctAnswer: 'Fold', explanation: 'A8o vs UTG open from CO: dominated by UTG range and without enough equity to continue.', tags: ['l5', 'position', 'co-fold'], difficultyScore: 52 },
+  { prompt: '6-max cash, 100bb. Folded to you MP with QTs. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'QTs is a profitable MP open with straight and flush potential and good connectivity.', tags: ['l5', 'position', 'mp-open'], difficultyScore: 51 },
+  { prompt: '6-max cash, 100bb. CO opens. You are SB with 86o. Best play?', choices: ['Fold', 'Call', 'Raise', 'Limp'], correctAnswer: 'Fold', explanation: '86o OOP vs CO open is a clear fold. Weak hand plus positional disadvantage is a chip leak.', tags: ['l5', 'position', 'sb-fold'], difficultyScore: 52 },
+  { prompt: '"Tight is right from early position, wide is fine from late position." Is this correct?', choices: ['Yes', 'No', 'Only in tournaments', 'Only deep-stacked'], correctAnswer: 'Yes', explanation: 'EP players face more opponents and are OOP post-flop; LP players have strong position advantages.', tags: ['l5', 'position', 'concept'], difficultyScore: 50 },
+  { prompt: '6-max cash, 100bb. Folded to you UTG with ATo. Best play?', choices: ['Fold', 'Raise', 'Limp', 'Call'], correctAnswer: 'Raise', explanation: 'ATo is a standard UTG open in 6-max. It has strong Broadway equity vs EP calling ranges.', tags: ['l5', 'position', 'utg-open'], difficultyScore: 53 },
+  { prompt: '6-max cash, 100bb. HJ opens. You are BTN with KJo. Best play?', choices: ['3-bet', 'Call', 'Fold', 'Shove'], correctAnswer: 'Call', explanation: 'KJo from BTN vs HJ open: call to see a flop in position. Not strong enough to 3-bet.', tags: ['l5', 'position', 'btn-call'], difficultyScore: 54 },
+  { prompt: '6-max cash, 100bb. Folded to you CO with T8s. Best play?', choices: ['Fold', 'Limp', 'Raise', 'Call'], correctAnswer: 'Raise', explanation: 'T8s is a profitable CO open with suited connector playability and position advantage.', tags: ['l5', 'position', 'co-open'], difficultyScore: 52 },
+];
+
 function buildLevel(
   level: Level,
   actionSeeds: ActionSeed[],
   outsSeeds: MathSeed[],
   evSeeds: MathSeed[],
+  positionSeeds: MathSeed[],
 ): ChallengeQuestion[] {
   return [
     ...actionSeeds.map((seed, i) => makeActionQuestion(level, i, seed)),
     ...outsSeeds.map((seed, i) => makeMathQuestion(level, i, 'outs', seed)),
     ...evSeeds.map((seed, i) => makeMathQuestion(level, i, 'ev', seed)),
+    ...positionSeeds.map((seed, i) => makeMathQuestion(level, i, 'position', seed)),
   ];
 }
 
 export const tier1BeginnerQuestions: ChallengeQuestion[] = [
-  ...buildLevel(1, level1ActionSeeds, level1OutsSeeds, level1EvSeeds),
-  ...buildLevel(2, level2ActionSeeds, level2OutsSeeds, level2EvSeeds),
-  ...buildLevel(3, level3ActionSeeds, level3OutsSeeds, level3EvSeeds),
-  ...buildLevel(4, level4ActionSeeds, level4OutsSeeds, level4EvSeeds),
-  ...buildLevel(5, level5ActionSeeds, level5OutsSeeds, level5EvSeeds),
+  ...buildLevel(1, level1ActionSeeds.slice(0, 20), [...level1OutsSeeds, ...level1ExtraOutsSeeds], level1EvSeeds, level1PositionSeeds),
+  ...buildLevel(2, level2ActionSeeds.slice(0, 20), [...level2OutsSeeds, ...level2ExtraOutsSeeds], level2EvSeeds, level2PositionSeeds),
+  ...buildLevel(3, level3ActionSeeds.slice(0, 20), [...level3OutsSeeds, ...level3ExtraOutsSeeds], level3EvSeeds, level3PositionSeeds),
+  ...buildLevel(4, level4ActionSeeds.slice(0, 20), [...level4OutsSeeds, ...level4ExtraOutsSeeds], level4EvSeeds, level4PositionSeeds),
+  ...buildLevel(5, level5ActionSeeds.slice(0, 20), [...level5OutsSeeds, ...level5ExtraOutsSeeds], level5EvSeeds, level5PositionSeeds),
 ];
 
 export function getTier1ByLevel(level: Level): ChallengeQuestion[] {

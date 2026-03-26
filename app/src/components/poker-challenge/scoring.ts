@@ -13,7 +13,7 @@ export const MAX_CHALLENGE_LEVEL = 25;
 export function getScoreDelta(
   isCorrect: boolean,
   heroWins: boolean,
-  category: 'action' | 'outs' | 'ev' = 'action',
+  category: 'action' | 'outs' | 'ev' | 'position' | 'pressure' = 'action',
   selectedAnswer?: string,
 ): number {
   // Outs / EV: pure answer score only

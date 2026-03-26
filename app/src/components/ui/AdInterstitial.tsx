@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   View, Image, Text, TouchableOpacity, StyleSheet,
-  Dimensions, Animated, Linking,
+  Animated, Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from './Theme';
@@ -69,7 +69,6 @@ export function AdInterstitial({ visible, onDismiss, storageKey, cooldownHours =
 
   if (!visible) return null;
 
-  const { width, height } = Dimensions.get('window');
   const canSkip = seconds === 0;
 
   return (
@@ -78,8 +77,8 @@ export function AdInterstitial({ visible, onDismiss, storageKey, cooldownHours =
       <TouchableOpacity style={s.imageWrap} activeOpacity={0.92} onPress={handleAdTap}>
         <Image
           source={require('../../../assets/apploading.png')}
-          style={[s.image, { width, height }]}
-          resizeMode="contain"
+          style={s.image}
+          resizeMode="cover"
         />
       </TouchableOpacity>
 
@@ -161,9 +160,10 @@ const s = StyleSheet.create({
     top: 0, left: 0, right: 0, bottom: 0,
     zIndex: 9999,
     backgroundColor: '#000',
+    overflow: 'hidden',
   },
-  imageWrap: { flex: 1 },
-  image:     { flex: 1 },
+  imageWrap: { ...StyleSheet.absoluteFillObject },
+  image:     { ...StyleSheet.absoluteFillObject },
 
   adBadge: {
     position: 'absolute',

@@ -39,7 +39,7 @@ export default function ToolsPage() {
   const { showAd, markAdShown } = useAdGate('tools');
 
   return (
-    <>
+    <View style={styles.wrapper}>
       <AdInterstitial visible={showAd} onDismiss={markAdShown} storageKey="tools" />
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>Poker Tools</Text>
@@ -99,12 +99,13 @@ export default function ToolsPage() {
         available={false}
       />
     </ScrollView>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
+  wrapper:   { flex: 1, backgroundColor: '#1a1a2e' },
   content: { padding: 20, paddingBottom: 40 },
   heading: {
     color: '#e94560',

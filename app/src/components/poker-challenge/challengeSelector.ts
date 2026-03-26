@@ -166,6 +166,39 @@ export function getQuestionById(level: number, id: string): ChallengeQuestion | 
   return null;
 }
 
+// ── Gauntlet mode (TC095) ─────────────────────────────────────────────────────
+
+/**
+ * Cumulative probability thresholds for gauntlet tier selection.
+ * Beginner:10%, Apprentice:15%, Grinder:20%, ChipLeader:25%, Master:30%
+ */
+const GAUNTLET_WEIGHTS: { tier: ChallengeTier; max: number }[] = [
+  { tier: 'beginner',    max: 0.10 },
+  { tier: 'apprentice',  max: 0.25 },
+  { tier: 'grinder',     max: 0.45 },
+  { tier: 'chip_leader', max: 0.70 },
+  { tier: 'master',      max: 1.00 },
+];
+
+/**
+ * Select a random question for Elite Gauntlet mode.
+ * Tier is chosen by weighted probability, then a fresh question is picked
+ * from that tier avoiding recent history.
+ */
+export function getGauntletQuestion(history: string[]): ChallengeQuestion {
+  const roll = Math.random();
+  let tier: ChallengeTier = 'master';
+  for (const w of GAUNTLET_WEIGHTS) {
+    if (roll < w.max) { tier = w.tier; break; }
+  }
+  const pool = getQuestionsForTier(tier);
+  const window = recentWindowSize(pool.length);
+  const recent = history.slice(-window);
+  const fresh  = pool.filter(q => !recent.includes(q.id));
+  const source = fresh.length > 0 ? fresh : pool;
+  return source[Math.floor(Math.random() * source.length)];
+}
+
 // ── Legacy single-call API (used by existing handleContinue path) ─────────────
 
 /**

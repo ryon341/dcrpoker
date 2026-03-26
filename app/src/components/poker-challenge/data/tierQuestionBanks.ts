@@ -1,17 +1,26 @@
 import type { ChallengeQuestion, ChallengeTier } from '../challengeQuestionTypes';
+import { applyReviewToAllBanks } from '../challengeQuestionReviewRegistry';
 import { tier1Questions } from './tier1Questions';
 import { tier2Questions } from './tier2Questions';
 import { tier3Questions } from './tier3Questions';
 import { tier4Questions } from './tier4Questions';
 import { tier5Questions } from './tier5Questions';
 
-export const tierQuestionBanks: Record<ChallengeTier, ChallengeQuestion[]> = {
+/** Raw unfiltered banks (used by validation and bank registry). */
+export const rawTierQuestionBanks: Record<ChallengeTier, ChallengeQuestion[]> = {
   beginner: tier1Questions,
   apprentice: tier2Questions,
   grinder: tier3Questions,
   chip_leader: tier4Questions,
   master: tier5Questions,
 };
+
+/**
+ * Reviewed runtime banks — quarantined questions removed, overrides applied.
+ * This is the single runtime source used by all selectors and gameplay.
+ */
+export const tierQuestionBanks: Record<ChallengeTier, ChallengeQuestion[]> =
+  applyReviewToAllBanks(rawTierQuestionBanks);
 
 function clampGlobalLevel(globalLevel: number): number {
   if (!Number.isFinite(globalLevel)) return 1;

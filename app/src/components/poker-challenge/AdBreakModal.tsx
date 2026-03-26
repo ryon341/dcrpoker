@@ -284,8 +284,8 @@ export function AdBreakModal({
 }
 
 const s = StyleSheet.create({
-  fullscreen: { flex: 1, backgroundColor: '#000' },
-  fill:       { width: '100%', height: '100%' },
+  fullscreen: { flex: 1, width: '100%', height: '100%', backgroundColor: '#000' },
+  fill:       { ...StyleSheet.absoluteFillObject },
 
   // Non-interactive absolute overlays
   overlayBgWrap:   { ...StyleSheet.absoluteFillObject, opacity: 0.40, zIndex: 1 },

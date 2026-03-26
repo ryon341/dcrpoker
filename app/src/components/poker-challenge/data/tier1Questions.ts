@@ -1,4 +1,6 @@
+// TC092 — Tier 1 / Beginner: now sources from the auto-generated bank (TC090.5).
+// The hand-authored bank (tier1BeginnerQuestions) is retained for reference.
 import type { ChallengeQuestion } from '../challengeQuestionTypes';
-import { tier1BeginnerQuestions } from './tier1BeginnerQuestions';
+import { generatedBeginnerQuestions } from './generated/generatedBeginnerQuestions';
 
-export const tier1Questions: ChallengeQuestion[] = tier1BeginnerQuestions;
+export const tier1Questions: ChallengeQuestion[] = generatedBeginnerQuestions;

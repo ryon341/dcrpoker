@@ -47,21 +47,25 @@ export function validateTier1BeginnerBank(questions: ChallengeQuestion[]): BankV
     }
 
     const levelByCategory = countBy(levelQuestions, (q) => q.category);
-    if ((levelByCategory.action ?? 0) !== 30) {
-      errors.push(`Level ${level} should have 30 action questions, found ${levelByCategory.action ?? 0}.`);
+    if ((levelByCategory.action ?? 0) !== 20) {
+      errors.push(`Level ${level} should have 20 action questions, found ${levelByCategory.action ?? 0}.`);
     }
-    if ((levelByCategory.outs ?? 0) !== 10) {
-      errors.push(`Level ${level} should have 10 outs questions, found ${levelByCategory.outs ?? 0}.`);
+    if ((levelByCategory.outs ?? 0) !== 12) {
+      errors.push(`Level ${level} should have 12 outs questions, found ${levelByCategory.outs ?? 0}.`);
     }
     if ((levelByCategory.ev ?? 0) !== 10) {
       errors.push(`Level ${level} should have 10 ev questions, found ${levelByCategory.ev ?? 0}.`);
     }
+    if ((levelByCategory.position ?? 0) !== 8) {
+      errors.push(`Level ${level} should have 8 position questions, found ${levelByCategory.position ?? 0}.`);
+    }
   }
 
   const byCategory = countBy(questions, (q) => q.category);
-  if ((byCategory.action ?? 0) !== 150) errors.push(`Tier should have 150 action questions, found ${byCategory.action ?? 0}.`);
-  if ((byCategory.outs ?? 0) !== 50) errors.push(`Tier should have 50 outs questions, found ${byCategory.outs ?? 0}.`);
+  if ((byCategory.action ?? 0) !== 100) errors.push(`Tier should have 100 action questions, found ${byCategory.action ?? 0}.`);
+  if ((byCategory.outs ?? 0) !== 60) errors.push(`Tier should have 60 outs questions, found ${byCategory.outs ?? 0}.`);
   if ((byCategory.ev ?? 0) !== 50) errors.push(`Tier should have 50 ev questions, found ${byCategory.ev ?? 0}.`);
+  if ((byCategory.position ?? 0) !== 40) errors.push(`Tier should have 40 position questions, found ${byCategory.position ?? 0}.`);
 
   return {
     ok: errors.length === 0,
@@ -111,14 +115,17 @@ export function validateTier2ApprenticeBank(questions: ChallengeQuestion[]): Ban
     }
 
     const levelByCategory = countBy(levelQuestions, (q) => q.category);
-    if ((levelByCategory.action ?? 0) !== 30) {
-      errors.push(`Level ${level} should have 30 action questions, found ${levelByCategory.action ?? 0}.`);
+    if ((levelByCategory.action ?? 0) !== 20) {
+      errors.push(`Level ${level} should have 20 action questions, found ${levelByCategory.action ?? 0}.`);
     }
     if ((levelByCategory.outs ?? 0) !== 10) {
       errors.push(`Level ${level} should have 10 outs questions, found ${levelByCategory.outs ?? 0}.`);
     }
-    if ((levelByCategory.ev ?? 0) !== 10) {
-      errors.push(`Level ${level} should have 10 ev questions, found ${levelByCategory.ev ?? 0}.`);
+    if ((levelByCategory.ev ?? 0) !== 12) {
+      errors.push(`Level ${level} should have 12 ev questions, found ${levelByCategory.ev ?? 0}.`);
+    }
+    if ((levelByCategory.position ?? 0) !== 8) {
+      errors.push(`Level ${level} should have 8 position questions, found ${levelByCategory.position ?? 0}.`);
     }
 
     const nativeCount = levelQuestions.filter((q) => q.sourceTier === 'apprentice' || !q.sourceTier).length;
@@ -132,9 +139,78 @@ export function validateTier2ApprenticeBank(questions: ChallengeQuestion[]): Ban
   }
 
   const byCategory = countBy(questions, (q) => q.category);
-  if ((byCategory.action ?? 0) !== 150) errors.push(`Tier should have 150 action questions, found ${byCategory.action ?? 0}.`);
+  if ((byCategory.action ?? 0) !== 100) errors.push(`Tier should have 100 action questions, found ${byCategory.action ?? 0}.`);
   if ((byCategory.outs ?? 0) !== 50) errors.push(`Tier should have 50 outs questions, found ${byCategory.outs ?? 0}.`);
-  if ((byCategory.ev ?? 0) !== 50) errors.push(`Tier should have 50 ev questions, found ${byCategory.ev ?? 0}.`);
+  if ((byCategory.ev ?? 0) !== 60) errors.push(`Tier should have 60 ev questions, found ${byCategory.ev ?? 0}.`);
+  if ((byCategory.position ?? 0) !== 40) errors.push(`Tier should have 40 position questions, found ${byCategory.position ?? 0}.`);
+
+  return {
+    ok: errors.length === 0,
+    errors,
+  };
+}
+
+/** TC091 — Validates the Tier 3 / Grinder question bank */
+export function validateTier3GrinderBank(questions: ChallengeQuestion[]): BankValidationResult {
+  const errors: string[] = [];
+
+  if (questions.length !== 250) {
+    errors.push(`Expected 250 questions, found ${questions.length}.`);
+  }
+
+  const idSet = new Set<string>();
+
+  for (const q of questions) {
+    if (idSet.has(q.id)) errors.push(`Duplicate id: ${q.id}`);
+    idSet.add(q.id);
+
+    if (q.category === 'action') {
+      if (!q.correctAction) errors.push(`Action question missing correctAction: ${q.id}`);
+    } else {
+      if (!q.choices || q.choices.length < 2) errors.push(`Math/pressure question missing choices: ${q.id}`);
+      if (!q.correctAnswer) errors.push(`Math/pressure question missing correctAnswer: ${q.id}`);
+    }
+  }
+
+  const byCategory = countBy(questions, (q) => q.category);
+  if ((byCategory.action ?? 0) !== 90)   errors.push(`Grinder should have 90 action questions, found ${byCategory.action ?? 0}.`);
+  if ((byCategory.outs ?? 0) !== 40)     errors.push(`Grinder should have 40 outs questions, found ${byCategory.outs ?? 0}.`);
+  if ((byCategory.ev ?? 0) !== 70)       errors.push(`Grinder should have 70 ev questions, found ${byCategory.ev ?? 0}.`);
+  if ((byCategory.pressure ?? 0) !== 50) errors.push(`Grinder should have 50 pressure questions, found ${byCategory.pressure ?? 0}.`);
+
+  return {
+    ok: errors.length === 0,
+    errors,
+  };
+}
+
+/** TC091 — Validates the Tier 4 / Chip Leader question bank */
+export function validateTier4ChipLeaderBank(questions: ChallengeQuestion[]): BankValidationResult {
+  const errors: string[] = [];
+
+  if (questions.length !== 250) {
+    errors.push(`Expected 250 questions, found ${questions.length}.`);
+  }
+
+  const idSet = new Set<string>();
+
+  for (const q of questions) {
+    if (idSet.has(q.id)) errors.push(`Duplicate id: ${q.id}`);
+    idSet.add(q.id);
+
+    if (q.category === 'action') {
+      if (!q.correctAction) errors.push(`Action question missing correctAction: ${q.id}`);
+    } else {
+      if (!q.choices || q.choices.length < 2) errors.push(`Math/pressure question missing choices: ${q.id}`);
+      if (!q.correctAnswer) errors.push(`Math/pressure question missing correctAnswer: ${q.id}`);
+    }
+  }
+
+  const byCategory = countBy(questions, (q) => q.category);
+  if ((byCategory.action ?? 0) !== 80)   errors.push(`Chip Leader should have 80 action questions, found ${byCategory.action ?? 0}.`);
+  if ((byCategory.outs ?? 0) !== 30)     errors.push(`Chip Leader should have 30 outs questions, found ${byCategory.outs ?? 0}.`);
+  if ((byCategory.ev ?? 0) !== 80)       errors.push(`Chip Leader should have 80 ev questions, found ${byCategory.ev ?? 0}.`);
+  if ((byCategory.pressure ?? 0) !== 60) errors.push(`Chip Leader should have 60 pressure questions, found ${byCategory.pressure ?? 0}.`);
 
   return {
     ok: errors.length === 0,

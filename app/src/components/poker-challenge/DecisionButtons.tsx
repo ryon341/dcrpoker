@@ -61,11 +61,11 @@ export function DecisionButtons({ onFold, onCall, onRaise, onSelect, options, di
 
 const s = StyleSheet.create({
   row:         { flexDirection: 'row', gap: 10, justifyContent: 'center', paddingVertical: 12 },
-  btn:         { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  btnSelected: { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', position: 'relative', transform: [{ scale: 1.05 }] },
-  btnDimmed:   { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', position: 'relative', opacity: 0.35 },
-  btnPressed:  { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', position: 'relative', transform: [{ scale: 0.94 }], opacity: 0.85 },
-  bg:          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', borderRadius: 10 },
+  btn:         { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 10 },
+  btnSelected: { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 10, transform: [{ scale: 1.05 }] },
+  btnDimmed:   { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 10, opacity: 0.35 },
+  btnPressed:  { width: 100, height: 52, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 10, transform: [{ scale: 0.94 }], opacity: 0.85 },
+  bg:          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   label:       { color: T.white, fontWeight: 'bold', fontSize: 15, letterSpacing: 1, zIndex: 1 },
   labelDimmed: { opacity: 0.5 },
 });

@@ -6,7 +6,7 @@
 import type { ChallengeAction } from './challengeTypes';
 
 export type ChallengeTier     = 'beginner' | 'apprentice' | 'grinder' | 'chip_leader' | 'master';
-export type ChallengeCategory = 'action' | 'outs' | 'ev';
+export type ChallengeCategory = 'action' | 'outs' | 'ev' | 'position' | 'pressure';
 
 export type ChallengeQuestion = {
   id: string;
