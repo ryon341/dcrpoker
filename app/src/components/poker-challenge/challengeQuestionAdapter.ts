@@ -54,10 +54,60 @@ function parseOutsCards(prompt: string): { heroCards?: string[]; boardCards?: st
   };
 }
 
-/** Extract all card tokens (e.g. 'Ac', '6h') found in a text string. */
+/** Extract all suit-specific card tokens (e.g. 'Ac', '6h') found in a text string. */
 function extractCardTokens(text: string): string[] {
   const matches = text.match(/\b[2-9TJQKA][cdhs]\b/g);
   return matches ?? [];
+}
+
+/**
+ * Convert a hand name like 'AA', 'AKs', 'AKo', 'QJ' into a concrete two-card tuple.
+ * Pairs use hearts + spades; suited hands use matching hearts; offsuit use h+d.
+ */
+function handNameToCards(hand: string): [string, string] | null {
+  const m = hand.toUpperCase().match(/^([2-9TJQKA])([2-9TJQKA])([SO]?)$/);
+  if (!m) return null;
+  const [, r1, r2, qual] = m;
+  if (r1 === r2) return [`${r1}h`, `${r2}s`];
+  const suit2 = qual === 'O' ? 'd' : 'h';
+  return [`${r1}h`, `${r2}${suit2}`];
+}
+
+/**
+ * Extract hero hand from prompts like "...with AKs..." or "...holding QQ...".
+ * Returns a two-card tuple or undefined.
+ */
+function parseHeroHandFromPrompt(prompt: string): [string, string] | undefined {
+  const m = prompt.match(/\b(?:with|holding)\s+([2-9TJQKA]{2,3}[so]?)\b/i);
+  if (!m) return undefined;
+  return handNameToCards(m[1]) ?? undefined;
+}
+
+/**
+ * Parse cards for action questions, trying three strategies in order:
+ * 1. "You hold X Y on Z A B" notation (explicit suit tokens)
+ * 2. "with [HAND]" / "holding [HAND]" generic hand names
+ * 3. Raw suit-specific card tokens scattered in the prompt
+ */
+function parseActionCards(prompt: string): { heroCards?: string[]; boardCards?: string[] } {
+  // Strategy 1: explicit "you hold" pattern with suit tokens
+  const outsResult = parseOutsCards(prompt);
+  if (outsResult.heroCards) return outsResult;
+
+  // Strategy 2: generic hand name like "with AA" or "with AKs"
+  const heroHandTuple = parseHeroHandFromPrompt(prompt);
+  if (heroHandTuple) return { heroCards: [...heroHandTuple] };
+
+  // Strategy 3: raw card tokens in order
+  const tokens = extractCardTokens(prompt);
+  if (tokens.length >= 2) {
+    return {
+      heroCards:  tokens.slice(0, 2),
+      boardCards: tokens.length > 2 ? tokens.slice(2) : undefined,
+    };
+  }
+
+  return {};
 }
 
 /**
@@ -74,13 +124,19 @@ function stripCardNotation(text: string, cards: string[]): string {
       '',
     )
     .trim();
-  // If the clause was not present, strip each token individually
-  if (result.length === text.length) {
-    for (const card of cards) {
+  // Also strip generic hand-name references like "with AKs" or "holding QQ"
+  result = result
+    .replace(/\b(?:with|holding)\s+[2-9TJQKA]{2,3}[so]?\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\.\s*\./, '.')
+    .trim();
+  // Strip any remaining suit-specific card tokens
+  for (const card of cards) {
+    if (/[cdhs]$/.test(card)) {
       result = result.replace(new RegExp(`\\b${card}\\b`, 'g'), '');
     }
-    result = result.replace(/\s{2,}/g, ' ').trim();
   }
+  result = result.replace(/\s{2,}/g, ' ').trim();
   return result || text;
 }
 
@@ -126,18 +182,11 @@ export function adaptQuestionToRuntime(question: ChallengeQuestion): RuntimeChal
   }
 
   if (question.category === 'action') {
-    // Parse cards from the prompt so the UI can render them visually
-    const tokens = extractCardTokens(question.prompt);
-    let heroCards: string[] | undefined;
-    let boardCards: string[] | undefined;
-    if (tokens.length >= 5 && tokens.length <= 7) {
-      heroCards  = tokens.slice(0, 2);
-      boardCards = tokens.slice(2);
-    } else if (tokens.length === 2) {
-      heroCards = tokens;
-    }
+    // Parse cards from the prompt using hand-name or token strategies
+    const { heroCards, boardCards } = parseActionCards(question.prompt);
+    const allParsedCards = [...(heroCards ?? []), ...(boardCards ?? [])];
     const displayScenario = heroCards
-      ? stripCardNotation(question.prompt, tokens)
+      ? stripCardNotation(question.prompt, allParsedCards)
       : question.prompt;
     return {
       id: question.id,

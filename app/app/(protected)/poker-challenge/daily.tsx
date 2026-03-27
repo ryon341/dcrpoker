@@ -327,7 +327,7 @@ export default function DailyChallengePage() {
               <View style={s.section}>
                 <Text style={s.sectionLabel}>Hand {handNumber} of {DAILY_HAND_COUNT}</Text>
 
-                {/* Action questions: scenario text + full hand/runout display */}
+                {/* Action questions: scenario text + full hand/runout display or card visual */}
                 {challenge.category === 'action' && (
                   <>
                     <QuestionPanel
@@ -345,6 +345,11 @@ export default function DailyChallengePage() {
                         showFlop={showFlop}
                         showTurn={showTurn}
                         showRiver={showRiver}
+                      />
+                    ) : challenge.heroCards && challenge.heroCards.length > 0 ? (
+                      <OutsCardDisplay
+                        heroCards={challenge.heroCards}
+                        boardCards={challenge.boardCards}
                       />
                     ) : null}
                   </>
@@ -373,6 +378,26 @@ export default function DailyChallengePage() {
                     explanation={challenge.explanation}
                     showExplanation={showExplanation}
                     tag="POT ODDS"
+                  />
+                )}
+
+                {/* Position questions */}
+                {challenge.category === 'position' && (
+                  <QuestionPanel
+                    scenario={challenge.scenario}
+                    explanation={challenge.explanation}
+                    showExplanation={showExplanation}
+                    tag={challenge.panelTitle}
+                  />
+                )}
+
+                {/* Pressure questions */}
+                {challenge.category === 'pressure' && (
+                  <QuestionPanel
+                    scenario={challenge.scenario}
+                    explanation={challenge.explanation}
+                    showExplanation={showExplanation}
+                    tag={challenge.panelTitle}
                   />
                 )}
               </View>
