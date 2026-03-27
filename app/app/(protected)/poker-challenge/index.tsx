@@ -917,7 +917,7 @@ export default function PokerChallengePage() {
                 : `Challenge #${gs.handsCompleted + 1}  ·  ${gs.sessionTotal + 1} / ${SESSION_LENGTH}`}
             </Text>
 
-            {/* Action questions: scenario text + full hand display */}
+            {/* Action questions: scenario text + full hand display or card visual */}
             {challenge.category === 'action' && (
               <>
                 <QuestionPanel
@@ -935,6 +935,11 @@ export default function PokerChallengePage() {
                     showFlop={showFlop}
                     showTurn={showTurn}
                     showRiver={showRiver}
+                  />
+                ) : challenge.heroCards && challenge.heroCards.length > 0 ? (
+                  <OutsCardDisplay
+                    heroCards={challenge.heroCards}
+                    boardCards={challenge.boardCards}
                   />
                 ) : null}
               </>

@@ -54,6 +54,36 @@ function parseOutsCards(prompt: string): { heroCards?: string[]; boardCards?: st
   };
 }
 
+/** Extract all card tokens (e.g. 'Ac', '6h') found in a text string. */
+function extractCardTokens(text: string): string[] {
+  const matches = text.match(/\b[2-9TJQKA][cdhs]\b/g);
+  return matches ?? [];
+}
+
+/**
+ * Strip the "You hold X Y on Z A B" clause and lingering card tokens
+ * from the scenario so raw notation is not duplicated when cards are
+ * shown visually.
+ */
+function stripCardNotation(text: string, cards: string[]): string {
+  if (cards.length === 0) return text;
+  // Remove the full "you hold ... on ..." clause first
+  let result = text
+    .replace(
+      /you\s+hold\s+(?:[2-9TJQKA][cdhs]\s+){1,2}on\s+(?:[2-9TJQKA][cdhs]\s*){2,5}/gi,
+      '',
+    )
+    .trim();
+  // If the clause was not present, strip each token individually
+  if (result.length === text.length) {
+    for (const card of cards) {
+      result = result.replace(new RegExp(`\\b${card}\\b`, 'g'), '');
+    }
+    result = result.replace(/\s{2,}/g, ' ').trim();
+  }
+  return result || text;
+}
+
 /** Format choice labels for readability.
  *  - Pure integers with outs context → "N outs"
  *  - Decimal/percentage strings ending in % → keep
@@ -96,17 +126,32 @@ export function adaptQuestionToRuntime(question: ChallengeQuestion): RuntimeChal
   }
 
   if (question.category === 'action') {
+    // Parse cards from the prompt so the UI can render them visually
+    const tokens = extractCardTokens(question.prompt);
+    let heroCards: string[] | undefined;
+    let boardCards: string[] | undefined;
+    if (tokens.length >= 5 && tokens.length <= 7) {
+      heroCards  = tokens.slice(0, 2);
+      boardCards = tokens.slice(2);
+    } else if (tokens.length === 2) {
+      heroCards = tokens;
+    }
+    const displayScenario = heroCards
+      ? stripCardNotation(question.prompt, tokens)
+      : question.prompt;
     return {
       id: question.id,
       category: question.category,
       panelTitle: PANEL_TITLES.action,
-      scenario: question.prompt,
+      scenario: displayScenario,
       explanation: question.explanation,
       answerOptions: ACTION_OPTIONS,
       correctAnswer: normalize(question.correctAction ?? ''),
       heroWins: question.correctAction !== 'fold',
       heroPosition: question.heroPosition,
       effectiveStackBb: question.effectiveStackBb,
+      heroCards,
+      boardCards,
       tags: question.tags,
     };
   }
@@ -127,6 +172,38 @@ export function adaptQuestionToRuntime(question: ChallengeQuestion): RuntimeChal
       heroWins: false,
       heroCards,
       boardCards,
+      tags: question.tags,
+    };
+  }
+
+  // position — explicit branch so it gets the correct panelTitle
+  if (question.category === 'position') {
+    const formattedChoices = (question.choices ?? []).map(c => formatAnswerLabel(c, 'position'));
+    return {
+      id: question.id,
+      category: question.category,
+      panelTitle: PANEL_TITLES.position,
+      scenario: cleanPrompt,
+      explanation: question.explanation,
+      answerOptions: formattedChoices,
+      correctAnswer: normalize(formatAnswerLabel(question.correctAnswer ?? '', 'position')),
+      heroWins: false,
+      tags: question.tags,
+    };
+  }
+
+  // pressure — explicit branch so it gets the correct panelTitle
+  if (question.category === 'pressure') {
+    const formattedChoices = (question.choices ?? []).map(c => formatAnswerLabel(c, 'pressure'));
+    return {
+      id: question.id,
+      category: question.category,
+      panelTitle: PANEL_TITLES.pressure,
+      scenario: cleanPrompt,
+      explanation: question.explanation,
+      answerOptions: formattedChoices,
+      correctAnswer: normalize(formatAnswerLabel(question.correctAnswer ?? '', 'pressure')),
+      heroWins: false,
       tags: question.tags,
     };
   }

@@ -34,13 +34,13 @@ export function QuestionPanel({ scenario, explanation, showExplanation, tag = 'G
 }
 
 const s = StyleSheet.create({
-  outer:      { width: '100%', minHeight: 100, marginVertical: 8 },
+  outer:      { width: '100%', minHeight: 100, marginVertical: 8, overflow: 'hidden' },
   bgImage:    { borderRadius: 12 },
-  content:    { paddingHorizontal: 20, paddingVertical: 14, width: '100%' },
+  content:    { paddingHorizontal: 30, paddingVertical: 18, width: '100%' },
   tag:        { color: T.gold, fontSize: 10, fontWeight: '700', letterSpacing: 1.6, marginBottom: 8, textAlign: 'center' },
-  question:   { color: T.white, fontSize: 16, fontWeight: '600', textAlign: 'center', lineHeight: 26 },
+  question:   { color: T.white, fontSize: 16, fontWeight: '600', textAlign: 'center', lineHeight: 24, flexShrink: 1 },
   expWrap:    { width: '100%', marginTop: 14, gap: 6 },
   expDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', alignSelf: 'stretch' },
   expLabel:   { color: T.gold, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  expText:    { color: T.silver, fontSize: 13, lineHeight: 20 },
+  expText:    { color: T.silver, fontSize: 13, lineHeight: 20, flexShrink: 1 },
 });
